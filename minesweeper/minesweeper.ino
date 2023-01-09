@@ -20,8 +20,8 @@
 // game state
 #define GAME_START 0
 #define GAME_RUNNING 1
-#define GAME_GAMEOVER_1 2
-#define GAME_GAMEOVER_2 3
+#define GAME_OVER 2
+#define GAME_WIN 3
 
 
 Arduboy2 arduboy;
@@ -72,6 +72,7 @@ uint8_t mines_positions[MINES_CNT][2];
 int16_t player_x = 0;
 int16_t player_y = 0;
 
+uint8_t revealed_cnt;
 uint8_t first_move;
 uint8_t game_state;
 
@@ -184,8 +185,10 @@ void reveal_tile(int16_t t_x, int16_t t_y) {
   field[t_y][t_x] = set_is_revealed(field_value);
 
   if (get_is_mine(field_value) == 1) {
-    game_state = GAME_GAMEOVER_1;
+    game_state = GAME_OVER;
     return;
+  } else {
+    revealed_cnt += 1;
   }
 
   if (get_sprite_index(field_value) != 0) return;
@@ -282,13 +285,11 @@ void init_field() {
       field[y][x] = 0;
     }
   }
+  revealed_cnt = 0;
 }
 
-void setup() {
-  arduboy.begin();
-  arduboy.setFrameRate(FPS);
-  arduboy.initRandomSeed();
-  game_state = GAME_START;
+uint8_t check_winning_condition() {
+  return FIELD_W * FIELD_H - revealed_cnt == MINES_CNT;
 }
 
 void game_loop() {
@@ -297,6 +298,9 @@ void game_loop() {
   arduboy.clear();
   draw_field();
   draw_player();
+  
+  if (check_winning_condition() == 1) game_state = GAME_WIN;
+
   arduboy.display();
 }
 
@@ -309,7 +313,12 @@ void draw_title_screen() {
   arduboy.setCursor(2, 3 * HEIGHT / 4);
   arduboy.print("Press A to play");
   arduboy.display();
-  if (arduboy.justPressed(A_BUTTON)) {
+  
+  arduboy.digitalWriteRGB(RED_LED, RGB_OFF);
+  arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF);
+
+
+  if (arduboy.justPressed(A_BUTTON | B_BUTTON)) {
     init_field();
     first_move = 1;
     game_state = GAME_RUNNING;
@@ -318,18 +327,23 @@ void draw_title_screen() {
 }
 
 
-void draw_gameover_state() {
+void draw_end_screen() {
   arduboy.clear();
   gameover_reveal();
   draw_field();
-  arduboy.setCursor(2, 2);
-  arduboy.setTextSize(2);
-  arduboy.print("GAME OVER");
   arduboy.display();
-  if (arduboy.justPressed(A_BUTTON)) {
+  arduboy.digitalWriteRGB(game_state == GAME_WIN ? GREEN_LED : RED_LED, RGB_ON);
+  if (arduboy.justPressed(A_BUTTON | B_BUTTON)) {
     game_state = GAME_START;
     arduboy.delayShort(100);
   }
+}
+
+void setup() {
+  arduboy.begin();
+  arduboy.setFrameRate(FPS);
+  arduboy.initRandomSeed();
+  game_state = GAME_START;
 }
 
 /*
@@ -346,8 +360,9 @@ void loop() {
     case GAME_RUNNING:
       game_loop();
       break;
-    case GAME_GAMEOVER_1:
-      draw_gameover_state();
+    case GAME_OVER:
+    case GAME_WIN:
+      draw_end_screen();
       break;
   }
 }
