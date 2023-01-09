@@ -2,7 +2,7 @@
 
 #define FPS 24
 #define TILE_SIZE 8
-#define MINES_CNT 12
+#define MINES_CNT 14
 
 #define NOT_OPEN_TILE 9
 #define MINE_TILE 10
@@ -112,7 +112,7 @@ void create_mines(uint8_t init_x, uint8_t init_y) {
     m_x = (uint8_t)random(0, FIELD_W);
     m_y = (uint8_t)random(0, FIELD_H);
 
-    if (m_x == 0 && m_y == 0) {
+    if (abs(m_x - init_x) <= 1 && abs(m_y - init_y) <= 1) {
       continue;
     }
 
@@ -230,6 +230,10 @@ void handle_input(){
     }
   }
   if (arduboy.justPressed(A_BUTTON)) {
+    if (first_move == 1) {
+      generate_field(player_x, player_y);
+      first_move = 0;
+    }
     reveal_tile(player_x, player_y);
   }
   if (arduboy.justPressed(B_BUTTON)) {
@@ -241,14 +245,6 @@ void setup() {
   arduboy.begin();
   arduboy.setFrameRate(FPS);
   arduboy.initRandomSeed();
-
-  generate_field(0, 0);
-
-  // for (uint8_t y = 0; y < FIELD_H; y++) {
-  //   for (uint8_t x = 0; x < FIELD_W; x++) {
-  //     field[y][x] = set_is_revealed(field[y][x]);
-  //   }
-  // }
 }
 
 void loop() {
