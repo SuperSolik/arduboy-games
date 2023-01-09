@@ -17,8 +17,15 @@
 #define IS_REVEALED_MASK (1<<REVEALED_BIT_OFFSET)
 #define SPRITE_INDEX_MASK (15<<SPRITED_INDEX_BIT_OFFSET) // bits 4-7 are 1s
 
+// game state
+#define GAME_START 0
+#define GAME_RUNNING 1
+#define GAME_GAMEOVER_1 2
+#define GAME_GAMEOVER_2 3
+
 
 Arduboy2 arduboy;
+
 
 const uint8_t minesweeper_sprites[] PROGMEM = {
   8, 8,
@@ -64,7 +71,9 @@ uint8_t mines_positions[MINES_CNT][2];
 
 int16_t player_x = 0;
 int16_t player_y = 0;
-int first_move = 1;
+
+uint8_t first_move;
+uint8_t game_state;
 
 
 uint8_t set_sprite_index(uint8_t value, uint8_t index) {
@@ -160,7 +169,6 @@ void generate_field(uint8_t init_x, uint8_t init_y) {
 }
 
 
-
 void toggle_flag_tile(int16_t x, int16_t y) {
   uint8_t is_flagged = get_is_flagged(field[y][x]);
   if (!get_is_revealed(field[y][x])) {
@@ -174,6 +182,12 @@ void reveal_tile(int16_t t_x, int16_t t_y) {
   if (get_is_revealed(field_value) || get_is_flagged(field_value)) return;
 
   field[t_y][t_x] = set_is_revealed(field_value);
+
+  if (get_is_mine(field_value) == 1) {
+    game_state = GAME_GAMEOVER_1;
+    return;
+  }
+
   if (get_sprite_index(field_value) != 0) return;
 
   // if it's 0 reval all neighbors as well
@@ -186,6 +200,14 @@ void reveal_tile(int16_t t_x, int16_t t_y) {
     }
 }
 
+void gameover_reveal() {
+  uint8_t m_x, m_y;
+  for(uint8_t i = 0; i < MINES_CNT; i++) {
+    m_x = mines_positions[i][0];
+    m_y = mines_positions[i][1];
+    field[m_y][m_x] = set_is_revealed(field[m_y][m_x]);
+  }
+}
 
 void draw_player() {
   arduboy.drawRect(player_x * TILE_SIZE, player_y * TILE_SIZE, TILE_SIZE, TILE_SIZE, WHITE);
@@ -206,9 +228,8 @@ void draw_field() {
   }
 }
 
-void handle_input(){
-  arduboy.pollButtons();
 
+void handle_input(){
   if (arduboy.justPressed(DOWN_BUTTON)) {
     if (player_y + 1 < FIELD_H) {
       player_y += 1;
@@ -241,21 +262,92 @@ void handle_input(){
   }
 }
 
+// void draw_game_over_screen()
+// {
+//   // arduboy.clear();
+//   arduboy.setCursor(WIDTH / 4 - 20, HEIGHT / 2 - 10);
+//   arduboy.setTextSize(2);
+//   arduboy.print("GAME OVER");
+//   arduboy.display();
+//   if (arduboy.pressed(A_BUTTON) || arduboy.pressed(B_BUTTON))
+//   {
+//     game_state = START;
+//     arduboy.delayShort(250);
+//   }
+// }
+
+void init_field() {
+  for (uint8_t y = 0; y < FIELD_H; y++) {
+    for (uint8_t x= 0; x < FIELD_W; x++) {
+      field[y][x] = 0;
+    }
+  }
+}
+
 void setup() {
   arduboy.begin();
   arduboy.setFrameRate(FPS);
   arduboy.initRandomSeed();
+  game_state = GAME_START;
 }
 
-void loop() {
-  if (!arduboy.nextFrame()) return;
-
+void game_loop() {
   handle_input();
 
   arduboy.clear();
-
-
   draw_field();
   draw_player();
   arduboy.display();
+}
+
+void draw_title_screen() {
+  arduboy.clear();
+  arduboy.setCursor(2, 2);
+  arduboy.setTextSize(2);
+  arduboy.print("MINES");
+  arduboy.setTextSize(1);
+  arduboy.setCursor(2, 3 * HEIGHT / 4);
+  arduboy.print("Press A to play");
+  arduboy.display();
+  if (arduboy.justPressed(A_BUTTON)) {
+    init_field();
+    first_move = 1;
+    game_state = GAME_RUNNING;
+    arduboy.delayShort(100);
+  }
+}
+
+
+void draw_gameover_state() {
+  arduboy.clear();
+  gameover_reveal();
+  draw_field();
+  arduboy.setCursor(2, 2);
+  arduboy.setTextSize(2);
+  arduboy.print("GAME OVER");
+  arduboy.display();
+  if (arduboy.justPressed(A_BUTTON)) {
+    game_state = GAME_START;
+    arduboy.delayShort(100);
+  }
+}
+
+/*
+TODO: winning condition && screen
+*/
+void loop() {
+  if (!arduboy.nextFrame()) return;
+  arduboy.pollButtons();
+
+  switch (game_state) {
+    case GAME_START:
+      draw_title_screen();
+      break;
+    case GAME_RUNNING:
+      game_loop();
+      break;
+    case GAME_GAMEOVER_1:
+      draw_gameover_state();
+      break;
+  }
 }
