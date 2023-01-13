@@ -1,3 +1,7 @@
+#ifndef FPS
+#define FPS 24 // default fps
+#endif
+
 #define MILLIS_TO_FRAMES(ms) ((ms * FPS) / 1000)
 
 #define PERIODIC_EVENTS_CNT 16
