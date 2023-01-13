@@ -17,6 +17,15 @@
 #define IS_REVEALED_MASK (1<<REVEALED_BIT_OFFSET)
 #define SPRITE_INDEX_MASK (15<<SPRITED_INDEX_BIT_OFFSET) // bits 4-7 are 1s
 
+#define SET_SPRITE_INDEX(x, index) ((x & ~SPRITE_INDEX_MASK) | (index << 4))
+#define SPRITE_INDEX(x) ((x & SPRITE_INDEX_MASK) >> SPRITED_INDEX_BIT_OFFSET)
+#define MINE(x) (x | IS_MINE_MASK)
+#define REVEAL(x) (x | IS_REVEALED_MASK)
+#define TOGGLE_IS_FLAGGED(x) (x ^ IS_FLAGGED_MASK)
+#define IS_MINE(x) ((x & IS_MINE_MASK) >> MINE_BIT_OFFSET)
+#define IS_FLAGGED(x) ((x & IS_FLAGGED_MASK) >> FLAGGED_BIT_OFFSET)
+#define IS_REVEALED(x) ((x & IS_REVEALED_MASK) >> REVEALED_BIT_OFFSET)
+
 // game state
 #define GAME_START 0
 #define GAME_RUNNING 1
@@ -68,54 +77,13 @@ uint8_t field[FIELD_H][FIELD_W] = {
 };
 
 uint8_t mines_positions[MINES_CNT][2];
-
-int16_t player_x = 0;
-int16_t player_y = 0;
-
-uint8_t revealed_cnt;
-uint8_t first_move;
-uint8_t game_state;
-
-
-uint8_t set_sprite_index(uint8_t value, uint8_t index) {
-  value = value & ~SPRITE_INDEX_MASK; // clear sprite bits
-  return value | (index << 4);
-}
-
-uint8_t get_sprite_index(uint8_t value) {
-  return (value & SPRITE_INDEX_MASK) >> SPRITED_INDEX_BIT_OFFSET;
-}
-
-uint8_t set_is_mine(uint8_t value) {
-  return value | IS_MINE_MASK;
-}
-
-uint8_t set_is_revealed(uint8_t value) {
-  return value | IS_REVEALED_MASK;
-}
-
-uint8_t toggle_is_flagged(uint8_t value) {
-  return value ^ IS_FLAGGED_MASK;
-}
-
-uint8_t get_is_mine(uint8_t value) {
-  return (value & IS_MINE_MASK) >> MINE_BIT_OFFSET;
-}
-
-uint8_t get_is_flagged(uint8_t value) {
-  return (value & IS_FLAGGED_MASK) >> FLAGGED_BIT_OFFSET;
-}
-
-uint8_t get_is_revealed(uint8_t value) {
-  return (value & IS_REVEALED_MASK) >> REVEALED_BIT_OFFSET;
-}
+int16_t player_x = 0, player_y = 0;
+uint8_t revealed_cnt, first_move, game_state;
 
 
 void create_mines(uint8_t init_x, uint8_t init_y) {
-  uint8_t mines_created = 0;
-  uint8_t m_x = 0;
-  uint8_t m_y = 0;
-  uint8_t try_again = 0;
+  uint8_t mines_created =0, try_again = 0;
+  uint8_t m_x = 0, m_y = 0;
 
   while (mines_created < MINES_CNT) {
     try_again = 0;
@@ -141,23 +109,22 @@ void create_mines(uint8_t init_x, uint8_t init_y) {
 }
 
 void update_field(){
-  uint8_t m_x, m_y;
-  uint8_t neighbor;
+  uint8_t m_x, m_y, neighbor;
 
   for(uint8_t i = 0; i < MINES_CNT; i++) {
     m_x = mines_positions[i][0];
     m_y = mines_positions[i][1];
 
-    field[m_y][m_x] = set_is_mine(field[m_y][m_x]);
-    field[m_y][m_x] = set_sprite_index(field[m_y][m_x], MINE_TILE);
+    field[m_y][m_x] = MINE(field[m_y][m_x]);
+    field[m_y][m_x] = SET_SPRITE_INDEX(field[m_y][m_x], MINE_TILE);
 
     for (int8_t y = -1; y <= 1; y++) {
       for (int8_t x = -1; x <= 1; x++) {
         if (x == 0 && y == 0) continue; // we don't need to look into current cell
         if (m_x + x >= 0 && m_x + x < FIELD_W && m_y + y >= 0 && m_y + y < FIELD_H) {
           neighbor = field[m_y + y][m_x + x];
-          if (get_is_mine(neighbor)) continue;
-          field[m_y + y][m_x + x] = set_sprite_index(neighbor, min(get_sprite_index(neighbor) + 1, 8));
+          if (IS_MINE(neighbor)) continue;
+          field[m_y + y][m_x + x] = SET_SPRITE_INDEX(neighbor, min(SPRITE_INDEX(neighbor) + 1, 8));
         }
       }
     }
@@ -171,36 +138,42 @@ void generate_field(uint8_t init_x, uint8_t init_y) {
 
 
 void toggle_flag_tile(int16_t x, int16_t y) {
-  uint8_t is_flagged = get_is_flagged(field[y][x]);
-  if (!get_is_revealed(field[y][x])) {
-    field[y][x] = toggle_is_flagged(field[y][x]);
+  if (!IS_REVEALED(field[y][x])) {
+    field[y][x] = TOGGLE_IS_FLAGGED(field[y][x]);
   }
 }
 
 void reveal_tile(int16_t t_x, int16_t t_y) {
+  if (t_x < 0 || t_x >= FIELD_W || t_y < 0 || t_y >= FIELD_H) return;
+
   uint8_t field_value = field[t_y][t_x];
 
-  if (get_is_revealed(field_value) || get_is_flagged(field_value)) return;
+  if (IS_REVEALED(field_value) || IS_FLAGGED(field_value)) return;
 
-  field[t_y][t_x] = set_is_revealed(field_value);
-
-  if (get_is_mine(field_value) == 1) {
+   if (IS_MINE(field_value)) {
     game_state = GAME_OVER;
     return;
-  } else {
-    revealed_cnt += 1;
   }
 
-  if (get_sprite_index(field_value) != 0) return;
+  field[t_y][t_x] = REVEAL(field_value);
 
-  // if it's 0 reval all neighbors as well
+  revealed_cnt += 1;
+
+  if (SPRITE_INDEX(field_value) != 0) return;
+
   for (int8_t y = -1; y <= 1; y++) {
-      for (int8_t x = -1; x <= 1; x++) {
-        if (t_x + x >= 0 && t_x + x < FIELD_W && t_y + y >= 0 && t_y + y < FIELD_H) {
-          reveal_tile(t_x + x, t_y + y);
-        }
-      }
+    for (int8_t x = -1; x <= 1; x++) {
+      reveal_tile(t_x + x, t_y + y);
     }
+  }
+}
+
+void reveal_revealed_neighbors(int16_t t_x, int16_t t_y) {
+  for (int8_t y = -1; y <= 1; y++) {
+    for (int8_t x = -1; x <= 1; x++) {
+      reveal_tile(t_x + x, t_y + y);
+    }
+  }
 }
 
 void gameover_reveal() {
@@ -208,7 +181,7 @@ void gameover_reveal() {
   for(uint8_t i = 0; i < MINES_CNT; i++) {
     m_x = mines_positions[i][0];
     m_y = mines_positions[i][1];
-    field[m_y][m_x] = set_is_revealed(field[m_y][m_x]);
+    field[m_y][m_x] = REVEAL(field[m_y][m_x]);
   }
 }
 
@@ -226,7 +199,7 @@ void draw_field() {
         x * TILE_SIZE, 
         y * TILE_SIZE, 
         minesweeper_sprites, 
-        get_is_revealed(value) == 1 ? get_sprite_index(value) : (get_is_flagged(value) == 1 ? FLAG_TILE : NOT_OPEN_TILE));
+        IS_REVEALED(value) == 1 ? SPRITE_INDEX(value) : (IS_FLAGGED(value) == 1 ? FLAG_TILE : NOT_OPEN_TILE));
     }
   }
 }
@@ -258,26 +231,17 @@ void handle_input(){
       generate_field(player_x, player_y);
       first_move = 0;
     }
-    reveal_tile(player_x, player_y);
+
+    if(IS_REVEALED(field[player_y][player_x])) {
+      reveal_revealed_neighbors(player_x, player_y);
+    } else {
+      reveal_tile(player_x, player_y);
+    }
   }
   if (arduboy.justPressed(B_BUTTON)) {
     toggle_flag_tile(player_x, player_y);
   }
 }
-
-// void draw_game_over_screen()
-// {
-//   // arduboy.clear();
-//   arduboy.setCursor(WIDTH / 4 - 20, HEIGHT / 2 - 10);
-//   arduboy.setTextSize(2);
-//   arduboy.print("GAME OVER");
-//   arduboy.display();
-//   if (arduboy.pressed(A_BUTTON) || arduboy.pressed(B_BUTTON))
-//   {
-//     game_state = START;
-//     arduboy.delayShort(250);
-//   }
-// }
 
 void init_field() {
   for (uint8_t y = 0; y < FIELD_H; y++) {
@@ -317,7 +281,6 @@ void draw_title_screen() {
   arduboy.digitalWriteRGB(RED_LED, RGB_OFF);
   arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF);
 
-
   if (arduboy.justPressed(A_BUTTON | B_BUTTON)) {
     init_field();
     first_move = 1;
@@ -346,9 +309,6 @@ void setup() {
   game_state = GAME_START;
 }
 
-/*
-TODO: winning condition && screen
-*/
 void loop() {
   if (!arduboy.nextFrame()) return;
   arduboy.pollButtons();
