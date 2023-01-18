@@ -4,7 +4,7 @@
 
 Arduboy2 a;
 
-Game<a.width(), a.height()> game(a, 24);
+Game game(a);
 
 void setup() {
   game.init();

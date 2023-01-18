@@ -32,15 +32,15 @@ enum class GameState : uint8_t {
   LOSE
 };
 
-template <uint8_t W, uint8_t H>
+constexpr uint8_t TILE_SIZE = 8;
+constexpr uint8_t FIELD_W = WIDTH / TILE_SIZE;
+constexpr uint8_t FIELD_H = HEIGHT / TILE_SIZE;
+
 class Game {
  public:
   static constexpr uint8_t MAX_MINES_CNT = 20;
   static constexpr uint8_t DEFAULT_FPS = 24;
   static constexpr uint8_t DEFAULT_MINES_CNT = 14;
-  static constexpr uint8_t TILE_SIZE = 8;
-  static constexpr uint8_t FIELD_W = W / TILE_SIZE;
-  static constexpr uint8_t FIELD_H = H / TILE_SIZE;
 
   Game(Arduboy2 arduboy, uint8_t fps = DEFAULT_FPS) {
     this->arduboy = arduboy;
