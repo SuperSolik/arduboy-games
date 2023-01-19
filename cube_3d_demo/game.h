@@ -83,8 +83,7 @@ class Game {
     return degrees / 180 * M_PI;
   }
 
-  Game(const Arduboy2& arduboy, uint8_t fps = DEFAULT_FPS) {
-    this->arduboy = arduboy;
+  Game(uint8_t fps = DEFAULT_FPS) {
     this->fps = fps;
   }
 

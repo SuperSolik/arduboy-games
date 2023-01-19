@@ -42,8 +42,7 @@ class Game {
   static constexpr uint8_t DEFAULT_FPS = 24;
   static constexpr uint8_t DEFAULT_MINES_CNT = 14;
 
-  Game(Arduboy2 arduboy, uint8_t fps = DEFAULT_FPS) {
-    this->arduboy = arduboy;
+  Game(uint8_t fps = DEFAULT_FPS) {
     this->fps = fps;
   }
 
