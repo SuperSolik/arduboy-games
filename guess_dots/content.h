@@ -4,7 +4,7 @@
 
 #include "point.h"
 
-namespace dots_content {
+namespace lvl {
 
 constexpr uint8_t tile_size_easy = 20;
 constexpr uint8_t tile_size_medium = 18;
@@ -13,7 +13,7 @@ constexpr uint8_t tile_size_hard = 18;
 constexpr uint8_t dots_capacity = 24;
 constexpr uint8_t numbers_capacity = 15;
 
-struct level_metadata {
+struct LevelMetadata {
   uint8_t tile_size;
   uint8_t dots_cnt;
   uint8_t numbers_cnt;
@@ -37,7 +37,8 @@ def f(xx: int, yy: int, t: int, n: int):
             x += t
 */
 
-level_metadata lm[2] = {
+// predefined level metadatas (grid setup, bit masks for count nearest dots)
+LevelMetadata lm[2] = {
     {
         .tile_size = 3,
         .dots_cnt = 9,
@@ -116,8 +117,8 @@ level_metadata lm[2] = {
 constexpr uint8_t levels_cnt = 20;
 
 struct Difficulty {
-    uint8_t render_metadata_index;
-    uint8_t current_level_index;
+    uint8_t lm_idx;
+    uint8_t cur_lvl_idx;
     uint32_t levels[levels_cnt];
     bool solved[levels_cnt] = {false};
 };
