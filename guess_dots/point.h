@@ -7,3 +7,4 @@ struct Point2D {
 };
 
 using PointU8 = Point2D<uint8_t>;
+using PointS8 = Point2D<int8_t>;

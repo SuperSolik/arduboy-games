@@ -10,16 +10,16 @@ constexpr uint8_t tile_size_easy = 20;
 constexpr uint8_t tile_size_medium = 18;
 constexpr uint8_t tile_size_hard = 18;
 
-constexpr uint8_t dots_capacity = 24;
-constexpr uint8_t numbers_capacity = 15;
+constexpr uint8_t dots_capacity = 25;
+constexpr uint8_t numbers_capacity = 16;
 
 struct LevelMetadata {
   uint8_t tile_size;
   uint8_t dots_cnt;
   uint8_t numbers_cnt;
 
-  PointU8 dots[dots_capacity];
-  PointU8 numbers[numbers_capacity];
+  PointS8 dots[dots_capacity];
+  PointS8 numbers[numbers_capacity];
   uint32_t cnt_masks[numbers_capacity];
 };
 
@@ -38,7 +38,7 @@ def f(xx: int, yy: int, t: int, n: int):
 */
 
 // predefined level metadatas (grid setup, bit masks for count nearest dots)
-LevelMetadata lm[2] = {
+LevelMetadata lm[3] = {
     {
         .tile_size = 3,
         .dots_cnt = 9,
@@ -112,6 +112,74 @@ LevelMetadata lm[2] = {
             (u32)1 << 10 | (u32)1 << 11 | (u32)1 << 14 | (u32)1 << 15,
         }
     },
+    {
+        .tile_size = 5,
+        .dots_cnt = 25,
+        .numbers_cnt = 16,
+        .dots = {
+            {.x = 28, .y = -4},
+            {.x = 46, .y = -4},
+            {.x = 64, .y = -4},
+            {.x = 82, .y = -4},
+            {.x = 100, .y = -4},
+            {.x = 28, .y = 14},
+            {.x = 46, .y = 14},
+            {.x = 64, .y = 14},
+            {.x = 82, .y = 14},
+            {.x = 100, .y = 14},
+            {.x = 28, .y = 32},
+            {.x = 46, .y = 32},
+            {.x = 64, .y = 32},
+            {.x = 82, .y = 32},
+            {.x = 100, .y = 32},
+            {.x = 28, .y = 50},
+            {.x = 46, .y = 50},
+            {.x = 64, .y = 50},
+            {.x = 82, .y = 50},
+            {.x = 100, .y = 50},
+            {.x = 28, .y = 68},
+            {.x = 46, .y = 68},
+            {.x = 64, .y = 68},
+            {.x = 82, .y = 68},
+            {.x = 100, .y = 68},
+        },
+        .numbers = {
+            {.x = 37, .y = 5},
+            {.x = 55, .y = 5},
+            {.x = 73, .y = 5},
+            {.x = 91, .y = 5},
+            {.x = 37, .y = 23},
+            {.x = 55, .y = 23},
+            {.x = 73, .y = 23},
+            {.x = 91, .y = 23},
+            {.x = 37, .y = 41},
+            {.x = 55, .y = 41},
+            {.x = 73, .y = 41},
+            {.x = 91, .y = 41},
+            {.x = 37, .y = 59},
+            {.x = 55, .y = 59},
+            {.x = 73, .y = 59},
+            {.x = 91, .y = 59},
+        },
+        .cnt_masks = {
+            (u32)1 << 0 | (u32)1 << 1 | (u32)1 << 5 | (u32)1 << 6,
+            (u32)1 << 1 | (u32)1 << 2 | (u32)1 << 6 | (u32)1 << 7,
+            (u32)1 << 2 | (u32)1 << 3 | (u32)1 << 7 | (u32)1 << 8,
+            (u32)1 << 3 | (u32)1 << 4 | (u32)1 << 8 | (u32)1 << 9,
+            (u32)1 << 5 | (u32)1 << 6 | (u32)1 << 10 | (u32)1 << 11,
+            (u32)1 << 6 | (u32)1 << 7 | (u32)1 << 11 | (u32)1 << 12,
+            (u32)1 << 7 | (u32)1 << 8 | (u32)1 << 12 | (u32)1 << 13,
+            (u32)1 << 8 | (u32)1 << 9 | (u32)1 << 13 | (u32)1 << 14,
+            (u32)1 << 10 | (u32)1 << 11 | (u32)1 << 15 | (u32)1 << 16,
+            (u32)1 << 11 | (u32)1 << 12 | (u32)1 << 16 | (u32)1 << 17,
+            (u32)1 << 12 | (u32)1 << 13 | (u32)1 << 17 | (u32)1 << 18,
+            (u32)1 << 13 | (u32)1 << 14 | (u32)1 << 18 | (u32)1 << 19,
+            (u32)1 << 15 | (u32)1 << 16 | (u32)1 << 20 | (u32)1 << 21,
+            (u32)1 << 16 | (u32)1 << 17 | (u32)1 << 21 | (u32)1 << 22,
+            (u32)1 << 17 | (u32)1 << 18 | (u32)1 << 22 | (u32)1 << 23,
+            (u32)1 << 18 | (u32)1 << 19 | (u32)1 << 23 | (u32)1 << 24,
+        }
+    }
 };
 
 constexpr uint8_t levels_cnt = 20;
