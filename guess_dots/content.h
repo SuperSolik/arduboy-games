@@ -6,6 +6,13 @@
 
 namespace lvl {
 
+enum class DifficultyLevel : uint8_t {
+    EASY = 0,
+    MEDIUM = 1,
+    HARD = 2
+};
+
+
 constexpr uint8_t tile_size_easy = 20;
 constexpr uint8_t tile_size_medium = 18;
 constexpr uint8_t tile_size_hard = 18;
@@ -14,6 +21,7 @@ constexpr uint8_t dots_capacity = 25;
 constexpr uint8_t numbers_capacity = 16;
 
 struct LevelMetadata {
+  bool use_offsets;
   uint8_t tile_size;
   uint8_t dots_cnt;
   uint8_t numbers_cnt;
@@ -40,6 +48,7 @@ def f(xx: int, yy: int, t: int, n: int):
 // predefined level metadatas (grid setup, bit masks for count nearest dots)
 LevelMetadata lm[3] = {
     {
+        .use_offsets = false,
         .tile_size = 3,
         .dots_cnt = 9,
         .numbers_cnt = 4,
@@ -68,6 +77,7 @@ LevelMetadata lm[3] = {
         }
     },
     {
+        .use_offsets = false,
         .tile_size = 4, 
         .dots_cnt = 16,
         .numbers_cnt = 9, 
@@ -113,6 +123,7 @@ LevelMetadata lm[3] = {
         }
     },
     {
+        .use_offsets = true,
         .tile_size = 5,
         .dots_cnt = 25,
         .numbers_cnt = 16,

@@ -51,7 +51,7 @@ class Game {
     this->arduboy.digitalWriteRGB(RED_LED, RGB_OFF);
     this->arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF);
 
-    this->set_level(2);
+    this->set_level(static_cast<uint8_t>(lvl::DifficultyLevel::HARD));
   }
 
   bool check_win() {
@@ -70,9 +70,10 @@ class Game {
     this->lm_idx = index;
     this->level = random(1, 2147483647);
 
-
-    offset_x = -64 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].x;
-    offset_y = -32 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].y;
+    if (lvl::lm[lm_idx].use_offsets) {
+      offset_x = -64 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].x;
+      offset_y = -32 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].y;
+    }
   }
 
   void player_input() {
@@ -87,7 +88,7 @@ class Game {
 
     new_offset_x = -64 + lvl::lm[lm_idx].dots[this->player_pos].x;
     new_offset_y = -32 + lvl::lm[lm_idx].dots[this->player_pos].y;
-    adjust_offset = true;
+    adjust_offset = lvl::lm[lm_idx].use_offsets;
   }
 
   void render() {
@@ -192,7 +193,6 @@ class Game {
   int16_t new_offset_x = 0;
   int16_t new_offset_y = 0; 
 
-  bool adjust_offset = true;
-
+  bool adjust_offset = false;
   bool level_start = true;
 };
