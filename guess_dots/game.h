@@ -2,9 +2,17 @@
 
 #include <Arduboy2.h>
 
-// #include "point.h"
+#include "bitmaps.h"
 #include "content.h"
 
+
+enum class GameState : uint8_t {
+  TITLE_SCREEN,
+  DIFF_CHOICE,
+  LEVEL_INIT,
+  LEVEL_PLAY,
+  LEVEL_COMPLETED,
+};
 
 class Game {
   static constexpr uint8_t DEFAULT_FPS = 24;
@@ -26,18 +34,122 @@ class Game {
     if (!this->arduboy.nextFrame()) return;
 
     this->arduboy.pollButtons();
+
+    switch (this->state) {
+      case GameState::TITLE_SCREEN:
+        this->title_screen();
+        break;
+      case GameState::DIFF_CHOICE:
+        this->choose_difficulty();
+        break;
+      case GameState::LEVEL_INIT:
+        this->set_level();
+        break;
+      case GameState::LEVEL_PLAY:
+        this->play_level();
+        break;
+      default:
+        break;
+    }
+    
+  }
+
+ private:
+  void title_screen(){
+    static bool flash_press_a_to_play = true;
+
+    this->arduboy.clear();
+
+    if (arduboy.everyXFrames(2 * this->fps / 3)){
+      flash_press_a_to_play = !flash_press_a_to_play;
+    }
+
+    this->arduboy.drawCompressed(35, 10, DOTS_LOGO);
+
+    if (flash_press_a_to_play) this->arduboy.drawCompressed(35, 32 + 20, PRESS_A_TO_PLAY);
+
+    if (this->arduboy.justPressed(A_BUTTON | B_BUTTON)) {
+      this->state = GameState::DIFF_CHOICE;
+    }
+
+    this->arduboy.display();
+  }
+
+  void choose_difficulty() {
+    if (this->chosen_difficulty == lvl::DifficultyLevel::NONE) {
+      this->chosen_difficulty = lvl::DifficultyLevel::EASY;
+    }
+
+    this->arduboy.clear();
+
+    this->arduboy.print(F("CHOOSE DIFFICULTY:\n\n"));
+
+    this->arduboy.print(F("  EASY (2x2)\n\n"));
+    this->arduboy.print(F("  MEDIUM (3x3)\n\n"));
+    this->arduboy.print(F("  HARD (4x4)\n\n"));
+
+    uint8_t diff_idx = static_cast<uint8_t>(this->chosen_difficulty);
+
+    this->arduboy.drawChar(4, 16 + diff_idx * 16, '*', WHITE, BLACK, 1);
+
+    if (this->arduboy.justPressed(UP_BUTTON) && this->chosen_difficulty > lvl::DifficultyLevel::EASY) {
+      this->chosen_difficulty = static_cast<lvl::DifficultyLevel>(diff_idx - 1);
+    }
+
+    if (this->arduboy.justPressed(DOWN_BUTTON) && this->chosen_difficulty < lvl::DifficultyLevel::HARD) {
+      this->chosen_difficulty = static_cast<lvl::DifficultyLevel>(diff_idx + 1);
+    }
+
+    if (this->arduboy.justPressed(A_BUTTON)) {
+      this->state = GameState::LEVEL_INIT;
+    } else if (this->arduboy.justPressed(B_BUTTON)) {
+      this->state = GameState::TITLE_SCREEN;
+    }
+
+    this->arduboy.display();
+  }
+
+  void set_level() {
+    if (this->chosen_difficulty == lvl::DifficultyLevel::NONE) {
+      this->state = GameState::DIFF_CHOICE;
+      return;
+    }
+
+    this->lm_idx = static_cast<uint8_t>(this->chosen_difficulty);
+
+    this->level = random(1, 2147483647);
+    this->player_pos = 0;
+
+    if (lvl::lm[lm_idx].use_offsets) {
+      offset_x = -64 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].x;
+      offset_y = -32 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].y;
+    }
+
+    this->state = GameState::LEVEL_PLAY;
+  }
+
+
+  void play_level() {
     this->player_input();
 
     if(this->check_win()){
       this->arduboy.digitalWriteRGB(GREEN_LED, RGB_ON);
+      this->state = GameState::LEVEL_COMPLETED;
     }
 
     this->arduboy.clear();
-    this->render();
+    this->render_level();
     this->arduboy.display();
   }
 
- private:
+   void reset() {
+    this->arduboy.digitalWriteRGB(RED_LED, RGB_OFF);
+    this->arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF);
+
+    this->state = GameState::TITLE_SCREEN;
+    this->chosen_difficulty = lvl::DifficultyLevel::NONE;
+  }
+
   uint8_t count_set_bits(uint32_t value) {
     uint8_t count = 0;
     while (value) {
@@ -47,12 +159,6 @@ class Game {
     return count;
   }
 
-  void reset() {
-    this->arduboy.digitalWriteRGB(RED_LED, RGB_OFF);
-    this->arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF);
-
-    this->set_level(static_cast<uint8_t>(lvl::DifficultyLevel::HARD));
-  }
 
   bool check_win() {
     uint32_t cnt_mask = 0;
@@ -63,17 +169,6 @@ class Game {
       }
     }
     return true;
-  }
-
-  void set_level(uint8_t index) {
-    if (index < 0 || index > 2) return;
-    this->lm_idx = index;
-    this->level = random(1, 2147483647);
-
-    if (lvl::lm[lm_idx].use_offsets) {
-      offset_x = -64 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].x;
-      offset_y = -32 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].y;
-    }
   }
 
   void player_input() {
@@ -91,7 +186,7 @@ class Game {
     adjust_offset = lvl::lm[lm_idx].use_offsets;
   }
 
-  void render() {
+  void render_level() {
     make_graduate_offset();
 
     for (uint8_t i = 0; i < lvl::lm[lm_idx].dots_cnt; i++) {
@@ -193,6 +288,10 @@ class Game {
   int16_t new_offset_x = 0;
   int16_t new_offset_y = 0; 
 
+  lvl::DifficultyLevel chosen_difficulty;
+  
   bool adjust_offset = false;
   bool level_start = true;
+
+  GameState state;
 };

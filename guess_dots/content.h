@@ -7,9 +7,11 @@
 namespace lvl {
 
 enum class DifficultyLevel : uint8_t {
+    NONE = 99,
     EASY = 0,
     MEDIUM = 1,
-    HARD = 2
+    HARD = 2,
+    COUNT = 3, // NONE is a technical option, does not count
 };
 
 
