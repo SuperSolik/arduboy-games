@@ -6,7 +6,7 @@
 
 namespace lvl {
 
-enum class DifficultyLevel : uint8_t {
+enum class Difficulty : uint8_t {
     NONE = 99,
     EASY = 0,
     MEDIUM = 1,
@@ -14,6 +14,9 @@ enum class DifficultyLevel : uint8_t {
     COUNT = 3, // NONE is a technical option, does not count
 };
 
+constexpr uint8_t DIFFICULTIES_CNT = static_cast<uint8_t>(lvl::Difficulty::COUNT);
+
+constexpr uint32_t NULL_LEVEL = 0;
 
 constexpr uint8_t tile_size_easy = 20;
 constexpr uint8_t tile_size_medium = 18;
@@ -28,13 +31,16 @@ struct LevelMetadata {
   uint8_t dots_cnt;
   uint8_t numbers_cnt;
 
+  uint32_t lvl_limit;
+  uint8_t score_value;
+
   PointS8 dots[dots_capacity];
   PointS8 numbers[numbers_capacity];
   uint32_t cnt_masks[numbers_capacity];
 };
 
 /*
-pre-calculated dots and numbers grid coords using folloring python3 function:
+pre-calculated dots and numbers grid coords using following python3 function:
 
 def f(xx: int, yy: int, t: int, n: int):
     x, y = xx, yy
@@ -45,15 +51,28 @@ def f(xx: int, yy: int, t: int, n: int):
             x = xx
         else:
             x += t
+
+
+pre-calculated max level limits using following python3 function
+
+def max_num(bits):
+    n = 0
+    for i in range(bits):
+        n |= 1 << i
+    return n
 */
 
 // predefined level metadatas (grid setup, bit masks for count nearest dots)
-LevelMetadata lm[3] = {
+LevelMetadata lm[DIFFICULTIES_CNT] = {
     {
         .use_offsets = false,
         .tile_size = 3,
         .dots_cnt = 9,
         .numbers_cnt = 4,
+
+        .lvl_limit = 511,
+        .score_value = 1,
+
         .dots = {
             {.x = 44, .y = 12},
             {.x = 64, .y = 12},
@@ -83,6 +102,10 @@ LevelMetadata lm[3] = {
         .tile_size = 4, 
         .dots_cnt = 16,
         .numbers_cnt = 9, 
+        
+        .lvl_limit = 65535,
+        .score_value = 5,
+
         .dots = {
             {.x = 37, .y = 5},
             {.x = 55, .y = 5},
@@ -129,6 +152,10 @@ LevelMetadata lm[3] = {
         .tile_size = 5,
         .dots_cnt = 25,
         .numbers_cnt = 16,
+
+        .lvl_limit = 33554431,
+        .score_value = 10,
+
         .dots = {
             {.x = 28, .y = -4},
             {.x = 46, .y = -4},
@@ -193,15 +220,6 @@ LevelMetadata lm[3] = {
             (u32)1 << 18 | (u32)1 << 19 | (u32)1 << 23 | (u32)1 << 24,
         }
     }
-};
-
-constexpr uint8_t levels_cnt = 20;
-
-struct Difficulty {
-    uint8_t lm_idx;
-    uint8_t cur_lvl_idx;
-    uint32_t levels[levels_cnt];
-    bool solved[levels_cnt] = {false};
 };
 
 }  // namespace dots_content
