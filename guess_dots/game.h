@@ -163,6 +163,12 @@ class Game {
     this->arduboy.display();
   }
 
+  void clear_led() {
+    this->arduboy.digitalWriteRGB(RED_LED, RGB_OFF);
+    this->arduboy.digitalWriteRGB(BLUE_LED, RGB_OFF);
+    this->arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF);
+  }
+
   void set_level() {
     if (this->chosen_difficulty == lvl::Difficulty::NONE) {
       this->state = GameState::DIFF_CHOICE;
@@ -179,11 +185,18 @@ class Game {
       this->player_pos = 0;
     }
 
+    offset_x = 0;
+    offset_y = 0;
+    new_offset_x = 0;
+    new_offset_y = 0;
+
     if (lvl::lm[lm_idx].use_offsets) {
       offset_x = -64 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].x;
       offset_y = -32 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].y;
     }
-
+    this->solution = 0;
+    this->post_level_complete_offset = false;
+    this->level_start = true;
     this->state = GameState::LEVEL_PLAY;
     this->score_saved = false;
   }
@@ -191,24 +204,39 @@ class Game {
   void completed_level_screen() {
     this->arduboy.clear();
 
-    this->save_data.level_in_progress = 0;
-    this->save_data.player_pos = 0;
-    this->save_data.levels_solved[lm_idx] += 1;
-    this->save_data.overall_score += lvl::lm[lm_idx].score_value;
-
-    this->arduboy.print(F("LEVEL\n"));
-    this->arduboy.print(F("COMPLETED!\n\n"));
-
-    this->arduboy.print(F("SCORE: "));
-    this->arduboy.print(this->save_data.overall_score);
-
     if (!this->score_saved) {
+      this->save_data.level_in_progress = 0;
+      this->save_data.player_pos = 0;
+      this->save_data.levels_solved[lm_idx] += 1;
+      this->save_data.overall_score += lvl::lm[lm_idx].score_value;
+
       this->save_to_eeprom();
+
       this->score_saved = true;
     }
 
+    this->arduboy.print(F("DONE!\n"));
+    
+    this->arduboy.print(F("SCORE:\n"));
+    this->arduboy.print(this->save_data.overall_score);
+
+    this->arduboy.print(F("\n\nA - NEXT"));
+    this->arduboy.print(F("\nB - BACK"));
+
+    if (this->arduboy.justPressed(A_BUTTON)) {
+      this->state = GameState::LEVEL_INIT;
+      this->clear_led();
+      return;
+    } else if (this->arduboy.justPressed(B_BUTTON)) {
+      this->state = GameState::TITLE_SCREEN;
+      this->clear_led();
+      return;
+    }
+
     new_offset_x = -64 + lvl::lm[lm_idx].dots[0].x;
-    new_offset_y = -32 + lvl::lm[lm_idx].dots[0].y;
+    new_offset_y = 0;
+
+    this->post_level_complete_offset = true;
 
     this->render_level();
     
@@ -229,9 +257,6 @@ class Game {
   }
 
   void reset() {
-    this->arduboy.digitalWriteRGB(RED_LED, RGB_OFF);
-    this->arduboy.digitalWriteRGB(GREEN_LED, RGB_OFF);
-
     this->state = GameState::TITLE_SCREEN;
     this->chosen_difficulty = lvl::Difficulty::NONE;
     this->load_save_from_eeprom();
@@ -331,13 +356,13 @@ class Game {
   }
 
   void make_graduate_offset() {
-    if (!adjust_offset) return;
+    if (!adjust_offset && !post_level_complete_offset) return;
 
-    int8_t step_x = new_offset_x < offset_x ? -3 : 3;
+    int8_t step_x = new_offset_x < offset_x ? -2 : 2;
     int8_t step_y = new_offset_y < offset_y ? -2 : 2;
 
     if (level_start) {
-      step_x /= 3;
+      step_x /= 2;
       step_y /= 2;
     }
 
@@ -361,7 +386,7 @@ class Game {
   uint8_t lm_idx = 0;
   uint32_t level = 13466;
   uint32_t solution = 0;
-  uint8_t player_pos = 0;
+  int16_t player_pos = 0;
 
   int16_t offset_x = 0;
   int16_t offset_y = 0;
@@ -372,6 +397,7 @@ class Game {
   lvl::Difficulty chosen_difficulty;
 
   bool adjust_offset = false;
+  bool post_level_complete_offset = false;
   bool level_start = true;
 
   SaveData save_data;
