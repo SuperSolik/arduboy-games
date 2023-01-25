@@ -14,19 +14,21 @@ enum class GameState : uint8_t {
 };
 
 struct SaveData {
+  uint8_t cur_difficulty;
   uint8_t player_pos;
   uint16_t overall_score;
-  uint16_t levels_solved[lvl::DIFFICULTIES_CNT];  // counter for each difficulty
   uint32_t level_in_progress;
+  uint16_t levels_solved[lvl::DIFFICULTIES_CNT];  // counter for each difficulty
 
   constexpr static SaveData empty_save_data() {
     return {
+      .cur_difficulty = 0,
       .player_pos = 0, 
       .overall_score = 0, 
+      .level_in_progress = lvl::NULL_LEVEL,
       .levels_solved = {
         0, 0, 0
       },
-      .level_in_progress = lvl::NULL_LEVEL
     };
   }
 };
@@ -167,10 +169,15 @@ class Game {
       return;
     }
 
-    this->lm_idx = static_cast<uint8_t>(this->chosen_difficulty);
-
-    this->level = random(1, lvl::lm[lm_idx].lvl_limit);
-    this->player_pos = 0;
+    if (this->save_data.level_in_progress != 0) {
+      this->lm_idx = static_cast<uint8_t>(this->save_data.cur_difficulty);
+      this->level = this->save_data.level_in_progress;
+      this->player_pos = this->save_data.player_pos;
+    } else {
+      this->lm_idx = static_cast<uint8_t>(this->chosen_difficulty);
+      this->level = random(1, lvl::lm[lm_idx].lvl_limit);
+      this->player_pos = 0;
+    }
 
     if (lvl::lm[lm_idx].use_offsets) {
       offset_x = -64 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].x;
@@ -184,13 +191,15 @@ class Game {
   void completed_level_screen() {
     this->arduboy.clear();
 
+    this->save_data.level_in_progress = 0;
+    this->save_data.player_pos = 0;
     this->save_data.levels_solved[lm_idx] += 1;
     this->save_data.overall_score += lvl::lm[lm_idx].score_value;
 
     this->arduboy.print(F("LEVEL\n"));
     this->arduboy.print(F("COMPLETED!\n\n"));
 
-    this->arduboy.print(F("SCORE:\n"));
+    this->arduboy.print(F("SCORE: "));
     this->arduboy.print(this->save_data.overall_score);
 
     if (!this->score_saved) {
@@ -202,7 +211,7 @@ class Game {
     new_offset_y = -32 + lvl::lm[lm_idx].dots[0].y;
 
     this->render_level();
-
+    
     this->arduboy.display();
   }
 
