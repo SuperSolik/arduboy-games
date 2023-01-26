@@ -6,41 +6,13 @@
 #include "content.h"
 
 enum class GameState : uint8_t {
+  INIT,
   TITLE_SCREEN,
   DIFF_CHOICE,
   LEVEL_INIT,
   LEVEL_PLAY,
   LEVEL_COMPLETED,
 };
-
-struct SaveData {
-  uint8_t cur_difficulty;
-  uint8_t player_pos;
-  uint16_t overall_score;
-  uint32_t level_in_progress;
-  uint16_t levels_solved[lvl::DIFFICULTIES_CNT];  // counter for each difficulty
-
-  constexpr static SaveData empty_save_data() {
-    return {
-      .cur_difficulty = 0,
-      .player_pos = 0, 
-      .overall_score = 0, 
-      .level_in_progress = lvl::NULL_LEVEL,
-      .levels_solved = {
-        0, 0, 0
-      },
-    };
-  }
-};
-
-// constexpr SaveData empty_save_data = {
-//   .player_pos = 0, 
-//   .overall_score = 0, 
-//   .levels_solved = {
-//     0, 0, 0
-//   },
-//   .level_in_progress = lvl::NULL_LEVEL
-// };
 
 class Game {
   static constexpr uint8_t DEFAULT_FPS = 24;
@@ -59,7 +31,7 @@ class Game {
     this->arduboy.begin();
     this->arduboy.setFrameRate(this->fps);
     this->arduboy.initRandomSeed();
-    this->reset();
+    this->state = GameState::INIT;
   }
 
   void run() {
@@ -68,6 +40,9 @@ class Game {
     this->arduboy.pollButtons();
 
     switch (this->state) {
+      case GameState::INIT:
+        this->reset();
+        break;
       case GameState::TITLE_SCREEN:
         this->title_screen();
         break;
@@ -89,30 +64,59 @@ class Game {
   }
 
  private:
-  void load_save_from_eeprom() {
+  void reset_score() {
+    this->score = 0;
+    this->save_score_to_eeprom();
+  }
+
+  void load_score_from_eeprom() {
     uint8_t c1 = EEPROM.read(EEPROM_START_C1);
     uint8_t c2 = EEPROM.read(EEPROM_START_C2);
     uint8_t c3 = EEPROM.read(EEPROM_START_C3);
 
     if (c1 != 'D' || c2 != '0' || c3 != 'T') { 
-      EEPROM.update(EEPROM_START_C1, 'D');
-      EEPROM.update(EEPROM_START_C2, '0');
-      EEPROM.update(EEPROM_START_C3, 'T');
-      this->save_data = SaveData::empty_save_data();
-      EEPROM.put(EEPROM_SAVE_DATA, this->save_data);
+      this->reset_score();
     } else {
-      EEPROM.get(EEPROM_SAVE_DATA, this->save_data);
+      EEPROM.get(EEPROM_SAVE_DATA, this->score);
     }
   }
 
-  void save_to_eeprom() {
-    EEPROM.put(EEPROM_SAVE_DATA, this->save_data);
+  void save_score_to_eeprom() {
+    EEPROM.update(EEPROM_START_C1, 'D');
+    EEPROM.update(EEPROM_START_C2, '0');
+    EEPROM.update(EEPROM_START_C3, 'T');
+    EEPROM.put(EEPROM_SAVE_DATA, this->score);
+    this->score_saved = true;
   }
 
   void title_screen() {
     static bool flash_press_a_to_play = true;
 
+    uint8_t btn_state = 0;
+
+    if (this->arduboy.justPressed(A_BUTTON)) {
+      btn_state |= A_BUTTON;
+    }
+
+    if (this->arduboy.justPressed(B_BUTTON)) {
+      btn_state |= B_BUTTON;
+    }
+
+    if (btn_state & (A_BUTTON | B_BUTTON)) {
+      this->state = GameState::DIFF_CHOICE;
+      return;
+    }
+
     this->arduboy.clear();
+
+    if (this->arduboy.pressed((UP_BUTTON | DOWN_BUTTON))) {
+      if (!this->score_saved) {
+        this->reset_score();
+      } else {
+        this->arduboy.setCursor(0, 0);
+        this->arduboy.print("score reset\n");
+      }
+    }
 
     if (arduboy.everyXFrames(2 * this->fps / 3)) {
       flash_press_a_to_play = !flash_press_a_to_play;
@@ -121,10 +125,6 @@ class Game {
     this->arduboy.drawCompressed(35, 10, DOTS_LOGO);
 
     if (flash_press_a_to_play) this->arduboy.drawCompressed(35, 32 + 20, PRESS_A_TO_PLAY);
-
-    if (this->arduboy.justPressed(A_BUTTON | B_BUTTON)) {
-      this->state = GameState::DIFF_CHOICE;
-    }
 
     this->arduboy.display();
   }
@@ -157,7 +157,7 @@ class Game {
     if (this->arduboy.justPressed(A_BUTTON)) {
       this->state = GameState::LEVEL_INIT;
     } else if (this->arduboy.justPressed(B_BUTTON)) {
-      this->state = GameState::TITLE_SCREEN;
+      this->state = GameState::INIT;
     }
 
     this->arduboy.display();
@@ -175,15 +175,9 @@ class Game {
       return;
     }
 
-    if (this->save_data.level_in_progress != 0) {
-      this->lm_idx = static_cast<uint8_t>(this->save_data.cur_difficulty);
-      this->level = this->save_data.level_in_progress;
-      this->player_pos = this->save_data.player_pos;
-    } else {
-      this->lm_idx = static_cast<uint8_t>(this->chosen_difficulty);
-      this->level = random(1, lvl::lm[lm_idx].lvl_limit);
-      this->player_pos = 0;
-    }
+    this->lm_idx = static_cast<uint8_t>(this->chosen_difficulty);
+    this->level = random(1, lvl::lm[lm_idx].lvl_limit);
+    this->player_pos = 0;
 
     offset_x = 0;
     offset_y = 0;
@@ -195,30 +189,24 @@ class Game {
       offset_y = -32 + lvl::lm[lm_idx].dots[lvl::lm[lm_idx].dots_cnt - 1].y;
     }
     this->solution = 0;
-    this->post_level_complete_offset = false;
+    this->force_offsets = false;
     this->level_start = true;
     this->state = GameState::LEVEL_PLAY;
     this->score_saved = false;
   }
 
   void completed_level_screen() {
-    this->arduboy.clear();
-
     if (!this->score_saved) {
-      this->save_data.level_in_progress = 0;
-      this->save_data.player_pos = 0;
-      this->save_data.levels_solved[lm_idx] += 1;
-      this->save_data.overall_score += lvl::lm[lm_idx].score_value;
-
-      this->save_to_eeprom();
-
-      this->score_saved = true;
+      this->score += lvl::lm[lm_idx].score_value;
+      this->save_score_to_eeprom();
     }
+
+    this->arduboy.clear();
 
     this->arduboy.print(F("DONE!\n"));
     
     this->arduboy.print(F("SCORE:\n"));
-    this->arduboy.print(this->save_data.overall_score);
+    this->arduboy.print(this->score);
 
     this->arduboy.print(F("\n\nA - NEXT"));
     this->arduboy.print(F("\nB - BACK"));
@@ -228,15 +216,17 @@ class Game {
       this->clear_led();
       return;
     } else if (this->arduboy.justPressed(B_BUTTON)) {
-      this->state = GameState::TITLE_SCREEN;
+      this->state = GameState::INIT;
       this->clear_led();
       return;
     }
 
-    new_offset_x = -64 + lvl::lm[lm_idx].dots[0].x;
-    new_offset_y = 0;
+    uint8_t t = lvl::lm[lm_idx].tile_size;
 
-    this->post_level_complete_offset = true;
+    new_offset_x = -96 + (lvl::lm[lm_idx].dots[t-1].x + lvl::lm[lm_idx].dots[0].x) / 2;
+    new_offset_y = -32 + (lvl::lm[lm_idx].dots[t * t - 1].y + lvl::lm[lm_idx].dots[0].y) / 2;
+
+    this->force_offsets = true;
 
     this->render_level();
     
@@ -259,7 +249,7 @@ class Game {
   void reset() {
     this->state = GameState::TITLE_SCREEN;
     this->chosen_difficulty = lvl::Difficulty::NONE;
-    this->load_save_from_eeprom();
+    this->load_score_from_eeprom();
     this->score_saved = false;
   }
 
@@ -295,11 +285,11 @@ class Game {
 
     new_offset_x = -64 + lvl::lm[lm_idx].dots[this->player_pos].x;
     new_offset_y = -32 + lvl::lm[lm_idx].dots[this->player_pos].y;
-    adjust_offset = lvl::lm[lm_idx].use_offsets;
+    adjust_offsets = lvl::lm[lm_idx].use_offsets;
   }
 
   void render_level() {
-    make_graduate_offset();
+    this->make_graduate_offset();
 
     for (uint8_t i = 0; i < lvl::lm[lm_idx].dots_cnt; i++) {
       if ((this->solution & ((uint32_t)1 << i)) >> i == 1) {
@@ -347,7 +337,6 @@ class Game {
       this->arduboy.drawChar(
           lvl::lm[lm_idx].numbers[i].x - offset_x - 2,
           lvl::lm[lm_idx].numbers[i].y - offset_y - 3,
-          // '0',
           count_set_bits(this->level & lvl::lm[lm_idx].cnt_masks[i]) + 48,
           WHITE,
           BLACK,
@@ -356,7 +345,7 @@ class Game {
   }
 
   void make_graduate_offset() {
-    if (!adjust_offset && !post_level_complete_offset) return;
+    if (!this->adjust_offsets && !this->force_offsets) return;
 
     int8_t step_x = new_offset_x < offset_x ? -2 : 2;
     int8_t step_y = new_offset_y < offset_y ? -2 : 2;
@@ -375,7 +364,7 @@ class Game {
     }
 
     if (offset_x == new_offset_x && offset_y == new_offset_y) {
-      adjust_offset = false;
+      adjust_offsets = false;
       level_start = false;
     }
   }
@@ -396,12 +385,12 @@ class Game {
 
   lvl::Difficulty chosen_difficulty;
 
-  bool adjust_offset = false;
-  bool post_level_complete_offset = false;
+  bool adjust_offsets = false;
+  bool force_offsets = false;
   bool level_start = true;
 
-  SaveData save_data;
-  bool score_saved;
+  uint16_t score = 0;
+  bool score_saved = false;
 
   GameState state;
 };
