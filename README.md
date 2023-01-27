@@ -37,7 +37,10 @@ gameplay:
 
 When all of the dots will be opened in such a way that it satisfies the dot counts (represented as numbers), the game will show the overall score (persistently saved to EEPROM)
 
-.hex file is available in the corresponding release, playable [on emulator](https://felipemanga.github.io/ProjectABE/?url=https://github.com/SuperSolik/arduboy-games/releases/download/dot-arduboy-edition/guess_dots.ino.hex&skin=Arduboy)
+.hex file is available in the corresponding release, also playable [on emulator](https://felipemanga.github.io/ProjectABE/?url=https://github.com/SuperSolik/arduboy-games/releases/download/dot-arduboy-edition/guess_dots.ino.hex&skin=Arduboy)
+
+<img width="300" alt="guess dots gameplay easy & medium" src="https://user-images.githubusercontent.com/31539612/215164272-23bcb568-a8ea-41fd-b0de-c066c448a99a.gif" >
+<img width="300" alt="guess dots gameplay hard" src="https://user-images.githubusercontent.com/31539612/215164860-926f271f-4136-46b5-a2bb-f0b211cfd23d.gif" >
 
 ## Rotating 3D cube demo
 
