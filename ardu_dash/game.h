@@ -1,8 +1,16 @@
 #include <Arduboy2.h>
 
 #include "bitmaps.h"
-#include "point.h"
 #include "rects_collision.h"
+
+#define DEBUG
+
+#ifdef DEBUG
+  #define DO_DEBUG(code) code
+#else
+  #define DO_DEBUG(code) do {} while(0)
+#endif
+
 
 enum class ObstacleType : uint8_t {
   PLATFORM = 0,
@@ -12,13 +20,8 @@ enum class ObstacleType : uint8_t {
   FLOOR = 4, // special technical obstacle
 };
 
-// struct ArduboyDrawable{
-//   virtual void draw(const Arduboy2& a) = 0;
-// };
-
 constexpr static uint8_t PLAYER_JUMP_LENGTH = 16;
 constexpr static int8_t PLAYER_JUMP_Y[PLAYER_JUMP_LENGTH] = {
-  // 1, 6, 12, 18, 21, 27, 29, 34, 29, 27, 21, 18, 12, 6, 1
     -8, -4, -4, -3, -3, -2, -2, -1, 1, 2, 2, 3, 3, 4, 4, 8
 };
 static constexpr uint8_t GROUND_Y = 1;
@@ -53,17 +56,10 @@ struct Player {
     );
   }
 
-  // constexpr Rect collision_rect() {
-  //   return Rect(
-  //     this->x,
-  //     this->y,
-  //     this->width,
-  //     this->height
-  //   );
-  // }
-
   void draw(const Arduboy2& a) {
-    a.print(is_grounded ? "g" : "n");
+    DO_DEBUG(
+      a.print(is_grounded ? "g" : "n");
+    );
     Sprites::drawSelfMasked(x-2, y-2, cube_sprite, animation_idx);
   }
 
@@ -140,95 +136,67 @@ struct Obstacle {
       uint8_t w = 0, h = 0;
 
       switch (collide_rects(player.rect(), bounds)) {
-          case CollisionType::NONE:
-              // a.print("NONE");
-              break;
-          case CollisionType::FULL:
-              // a.print("FULL");
-              break;
           case CollisionType::TOP:
           case CollisionType::TOP_LEFT:
-          // case CollisionType::TOP_LEFT:
-              // a.print("TOP");
               w = player.width;
               h = bounds.y + bounds.height - player.y;
-
               player.y = bounds.y + bounds.height;
               break;
           case CollisionType::BOTTOM:
           case CollisionType::BOTTOM_LEFT:
-              // a.print("BOTTOM | BOTTOM_LEFT");
               player.ground();
               player.y = bounds.y - player.height;
               break;
           case CollisionType::LEFT:
-          // case CollisionType::TOP_LEFT:
-              // a.print("LEFT");
               h = player.height;
               w = bounds.x + bounds.width - player.x;
 
               player.x = bounds.x + bounds.width;
               break;
           case CollisionType::RIGHT:
-              // a.print("RIGHT");
               player.dead();
-
               h = player.height;
               w = player.x + player.width - bounds.x;
-
               player.x = bounds.x - player.width;
-              a.setCursor(0, 8);
-              a.print("R\n");
-              a.print(w);
-              a.print(" ");
-              a.print(h);
+              // DO_DEBUG(
+              //   a.setCursor(0, 8);
+              //   a.print("R\n");
+              //   a.print(w);
+              //   a.print(" ");
+              //   a.print(h);
+              // );
               break;
-          // case CollisionType::TOP_LEFT:
-          //     // a.print("TOP_LEFT");
-          //     w = o.x + o.width - player.x;
-          //     h = o.y + o.height - player.y;
-          //     if (w >= 16 / 2) {
-          //         player.y = o.y + o.height;
-          //     }
-          //     break;
           case CollisionType::TOP_RIGHT:
-              // a.print("TOP_RIGHT");
               w = player.x + player.width - bounds.x;
               h = bounds.y + bounds.height - player.y;
-
               if (h > player.height / 3) {
                   player.x = bounds.x - player.width;
                   player.dead();
-                  a.setCursor(0, 8);
-                  a.print("TR\n");
-                  a.print(w);
-                  a.print(" ");
-                  a.print(h);
+                  // DO_DEBUG(
+                  //   a.setCursor(0, 8);
+                  //   a.print("TR\n");
+                  //   a.print(w);
+                  //   a.print(" ");
+                  //   a.print(h);
+                  // );
               }
-
               break;
-          // case CollisionType::BOTTOM_LEFT:
-          //     a.print("BOTTOM_LEFT");
-          //     w = obstacle.x + obstacle.width - player.x;
-          //     h = player.y + player.height - obstacle.y;
-          //     break;
           case CollisionType::BOTTOM_RIGHT:
-              // a.print("BOTTOM_RIGHT");
               w = player.x + player.width - bounds.x;
               h = player.y + player.height - bounds.y;
-
               if (h > player.height / 3) {
                   player.x = bounds.x - player.width;
                   player.dead();
-                  a.setCursor(0, 8);
-                  a.print("BR\n");
-                  a.print(w);
-                  a.print(" ");
-                  a.print(h);
+                  // DO_DEBUG(
+                  //   a.setCursor(0, 8);
+                  //   a.print("BR\n");
+                  //   a.print(w);
+                  //   a.print(" ");
+                  //   a.print(h);
+                  // );
               }
               break;
           default:
-              // a.print("UNKNOWN");
               break;
         }
     }
@@ -313,8 +281,6 @@ class Game {
       this->reset();
       return;
     }
-
-    
 
     this->arduboy.clear();
 
@@ -415,9 +381,8 @@ class Game {
   bool is_jumping = false;
   uint8_t jump_idx = 0;
 
-  PointS16 stars[STARS_CNT];
+  Point stars[STARS_CNT];
   
-
   int16_t launch_timer = 0;
 
   Player player;
