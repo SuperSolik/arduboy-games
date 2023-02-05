@@ -59,7 +59,18 @@ struct Player {
   void draw(const Arduboy2& a) {
     DO_DEBUG(
       a.print(is_grounded ? "g" : "n");
-    );
+    );// BlockObstacle(
+    //   WIDTH,
+    //   HEIGHT - (GROUND_Y + OBJECT_SIZE - 1),
+    //   OBJECT_SIZE * 2,
+    //   OBJECT_SIZE
+    // ),
+    // BlockObstacle(
+    //   WIDTH,
+    //   HEIGHT - (GROUND_Y + 2 * OBJECT_SIZE - 1),
+    //   OBJECT_SIZE * 2,
+    //   OBJECT_SIZE
+    // ),
     Sprites::drawSelfMasked(x-2, y-2, cube_sprite, animation_idx);
   }
 
@@ -113,23 +124,35 @@ struct Player {
 struct Obstacle {
     static constexpr uint8_t MOVE_SPEED = 3;
 
-    Obstacle() = default;
+    Obstacle() {
+      this->bounds = Rect(0, 0, 0, 0);
+      this->_type = ObstacleType::BLOCK;
+      this->enabled = false;
+    }
 
-    constexpr Obstacle(const Rect& bounds, ObstacleType _type, bool enabled = false): 
+    Obstacle(
+      const Rect& bounds, 
+      ObstacleType _type, 
+      uint8_t init_offset = 0, 
+      bool enabled = false
+    ): 
       bounds(bounds),
       _type(_type),
-      enabled(enabled) {}
+      enabled(enabled) {
+        this->bounds.x += init_offset;
+      }
 
-    constexpr Obstacle(
+    Obstacle(
       int16_t x, int16_t y, uint8_t width, uint8_t height, 
       ObstacleType _type, 
+      uint8_t init_offset = 0,
       bool enabled = false
     ):
-      Obstacle(Rect(x, y, width, height), _type, enabled) {}
+      Obstacle(Rect(x, y, width, height), _type, init_offset, enabled) {}
     
     void update() {
       bounds.x -= MOVE_SPEED;
-      if (bounds.x + bounds.width < 0) enabled = false;
+      // if (bounds.x + bounds.width < 0) enabled = false;
     }
 
     void block_interact(Player& player, const Arduboy2& a) {
@@ -241,8 +264,8 @@ struct Obstacle {
 
 
 struct BlockObstacle: Obstacle {
-  constexpr BlockObstacle(int16_t x, int16_t y, uint8_t width, uint8_t height) :
-    Obstacle(x, y, width, height, ObstacleType::BLOCK, false) {}
+  BlockObstacle(int16_t x, int16_t y, uint8_t width, uint8_t height, uint8_t init_offset = 0) :
+    Obstacle(x, y, width, height, ObstacleType::BLOCK, init_offset) {}
 };
 
 class Game {
@@ -251,7 +274,7 @@ class Game {
   static constexpr uint8_t STARS_SPEED = 1;
   static constexpr uint8_t OBJECT_SIZE = 16;
   static constexpr uint8_t PLAYER_X = 32 - OBJECT_SIZE;
-  static constexpr uint8_t OBSTACLES_CNT = 3;
+  static constexpr uint8_t OBSTACLES_POOL_CAP = 16;
   static constexpr uint8_t LAUNCH_START = 20;
   static constexpr uint8_t LAUNCH_END = 20;
 
@@ -269,6 +292,8 @@ class Game {
 
   void run() {
     if (!arduboy.nextFrame()) return;
+
+    // do level load/generation
 
     arduboy.pollButtons();
 
@@ -300,6 +325,7 @@ class Game {
 
  private:
   void reset() {
+    // create player
     player = Player(
       PLAYER_X,
       HEIGHT - (12 + GROUND_Y),
@@ -307,54 +333,96 @@ class Game {
       12
     );
 
+    // create special obstacle representing floor
     floor = Obstacle(
       0, HEIGHT - GROUND_Y, WIDTH, 0,
       ObstacleType::FLOOR,
       true
     );
 
+    // reset starts
     for (auto& s : stars) {
       s.x = random(0, arduboy.width());
       s.y = random(0, arduboy.height());
     }
 
-    for (auto& o : obstacles) {
+    // reset obstacle pool
+    for (auto& o : obstacle_pool) {
       o.enabled = false;
     }
 
-    reset_launch_time();
+    uint8_t prev_added_obstacle_idx = obstacle_add_to_pool(
+      BlockObstacle(
+        WIDTH,
+        HEIGHT - (GROUND_Y + OBJECT_SIZE - 1),
+        OBJECT_SIZE * 2,
+        OBJECT_SIZE,
+        0
+      )
+    );
+
+    Obstacle* prev_obstacle = &obstacle_pool[prev_added_obstacle_idx]; 
+
+    prev_added_obstacle_idx = obstacle_add_to_pool(
+      BlockObstacle(
+        prev_obstacle->bounds.x + prev_obstacle->bounds.width,
+        HEIGHT - (GROUND_Y + 2 * OBJECT_SIZE - 1),
+        OBJECT_SIZE * 2,
+        OBJECT_SIZE,
+        OBJECT_SIZE * 2
+      )
+    );
+
+    prev_obstacle = &obstacle_pool[prev_added_obstacle_idx];
+
+    prev_added_obstacle_idx = obstacle_add_to_pool(
+      BlockObstacle(
+        prev_obstacle->bounds.x + prev_obstacle->bounds.width,
+        HEIGHT - (GROUND_Y + 2 * OBJECT_SIZE - 1),
+        OBJECT_SIZE,
+        OBJECT_SIZE * 2,
+        OBJECT_SIZE
+      )
+    );
+
   }
 
-  void reset_launch_time() {
-    launch_timer = random(LAUNCH_START, LAUNCH_END);
-  }
+  // void reset_launch_time() {
+  //   launch_timer = random(LAUNCH_START, LAUNCH_END);
+  // }
 
   void update_and_draw_obstacles() {
-    --launch_timer;
+    // --launch_timer;
     
-    if (launch_timer <= 0) {
-      for (uint8_t i = 0; i < OBSTACLES_CNT; i++) {
-        if (!obstacles[i].enabled) {
-          launch_obstacle(i);
-          break; 
-        }
-      }
-      reset_launch_time();
-    }
+    // if (launch_timer <= 0) {
+    //   for (uint8_t i = 0; i < OBSTACLES_POOL_CAP; i++) {
+    //     if (!obstacle_pool[i].enabled) {
+    //       launch_obstacle(i);
+    //       break; 
+    //     }
+    //   }
+    //   reset_launch_time();
+    // }
 
-    for (uint8_t i = 0; i < OBSTACLES_CNT; i++) {
-      if (obstacles[i].enabled) {
-        obstacles[i].update();
-        obstacles[i].interact(this->player, arduboy);
-        obstacles[i].draw(this->arduboy);
+    for (uint8_t obstacle_index = 0; obstacle_index < OBSTACLES_POOL_CAP; obstacle_index++) {
+      if (obstacle_pool[obstacle_index].enabled) {
+
+        obstacle_pool[obstacle_index].update();
+        obstacle_pool[obstacle_index].interact(this->player, arduboy);
+        obstacle_pool[obstacle_index].draw(this->arduboy);
+
+        Rect& o_bounds = obstacle_pool[obstacle_index].bounds;
+        if (o_bounds.x + o_bounds.width <= 0) {
+          obstacle_remove_from_pool(obstacle_index);
+        }
       }
     }
   }
   
-  void launch_obstacle(uint8_t obstacle_idx) {
-    obstacles[obstacle_idx].enabled = true;
-    obstacles[obstacle_idx].bounds.x = arduboy.width() - 1;
-  }
+  // void launch_obstacle(uint8_t obstacle_idx) {
+  //   obstacle_pool[obstacle_idx].enabled = true;
+  //   obstacle_pool[obstacle_idx].bounds.x = arduboy.width() - 1;
+  // }
 
   void update_and_draw_backgroud() {
     for (uint8_t i = 0; i < STARS_CNT; i++) {
@@ -374,6 +442,23 @@ class Game {
     }
   }
 
+  int8_t obstacle_add_to_pool(const Obstacle& o) {
+    for (uint8_t i = 0; i < OBSTACLES_POOL_CAP; i++) {
+        if (!obstacle_pool[i].enabled) {
+            obstacle_pool[i] = o;
+            obstacle_pool[i].enabled = true;
+            return i;
+        }
+    }
+    return -1; // failed to add to pool
+  }
+
+  bool obstacle_remove_from_pool(int8_t obstacle_index) {
+    if (obstacle_index >= OBSTACLES_POOL_CAP || obstacle_index < 0) return false;
+    obstacle_pool[obstacle_index].enabled = false;
+    return true;
+  }
+
   Arduboy2 arduboy;
   uint8_t fps;
   uint8_t animation_idx;
@@ -391,25 +476,25 @@ class Game {
 
   Obstacle floor;
 
-  Obstacle obstacles[OBSTACLES_CNT] = {
-    BlockObstacle(
-      WIDTH,
-      HEIGHT - (GROUND_Y + OBJECT_SIZE - 1),
-      OBJECT_SIZE * 2,
-      OBJECT_SIZE
-    ),
-    BlockObstacle(
-      WIDTH,
-      HEIGHT - (GROUND_Y + 2 * OBJECT_SIZE - 1),
-      OBJECT_SIZE * 2,
-      OBJECT_SIZE
-    ),
-    BlockObstacle(
-      WIDTH,
-      HEIGHT - (GROUND_Y + 3 * OBJECT_SIZE - 1),
-      OBJECT_SIZE * 2,
-      OBJECT_SIZE
-    )
+  Obstacle obstacle_pool[OBSTACLES_POOL_CAP];
+    // BlockObstacle(
+    //   WIDTH,
+    //   HEIGHT - (GROUND_Y + OBJECT_SIZE - 1),
+    //   OBJECT_SIZE * 2,
+    //   OBJECT_SIZE
+    // ),
+    // BlockObstacle(
+    //   WIDTH,
+    //   HEIGHT - (GROUND_Y + 2 * OBJECT_SIZE - 1),
+    //   OBJECT_SIZE * 2,
+    //   OBJECT_SIZE
+    // ),
+    // BlockObstacle(
+    //   WIDTH,
+    //   HEIGHT - (GROUND_Y + 3 * OBJECT_SIZE - 1),
+    //   OBJECT_SIZE * 2,
+    //   OBJECT_SIZE
+    // )
       // {
       //     .type = ObstacleType::BLOCK,
       //     .x = WIDTH,
@@ -450,5 +535,4 @@ class Game {
       //     .h = OBJECT_SIZE,
       //     .enabled = false,
       // }
-    };
 };
