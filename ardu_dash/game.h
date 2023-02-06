@@ -5,6 +5,7 @@
 #include "player.h"
 #include "obstacles.h"
 #include "map.h"
+#include "game_global_constants.h"
 
 
 static constexpr uint8_t GROUND_Y = 1;
@@ -14,11 +15,8 @@ class Game {
   static constexpr uint8_t DEFAULT_FPS = 24;
   static constexpr uint8_t STARS_CNT = 55;
   static constexpr uint8_t STARS_SPEED = 1;
-  static constexpr uint8_t OBJECT_SIZE = 16;
   static constexpr uint8_t PLAYER_X = 32 - OBJECT_SIZE;
   static constexpr uint8_t OBSTACLES_POOL_CAP = 32;
-  static constexpr uint8_t LAUNCH_START = 20;
-  static constexpr uint8_t LAUNCH_END = 20;
 
  public:
   Game(uint8_t fps = DEFAULT_FPS) {

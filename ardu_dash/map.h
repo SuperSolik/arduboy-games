@@ -1,6 +1,7 @@
 #pragma once
 
 #include "obstacles.h"
+#include "game_global_constants.h"
 
 #define SEGMENT_H 4
 #define SEGMENT_W 10
@@ -99,10 +100,10 @@ int8_t parse_segment_map_to_obstacles(Obstacle obstacles[SEGMENT_W], const char 
                     
                     // create obstacle
                     // TODO: replace 16 with object size
-                    obstacles[created_cnt].bounds.width = 1 * 16;
-                    obstacles[created_cnt].bounds.height = height * 16;
-                    obstacles[created_cnt].bounds.x = x * 16;
-                    obstacles[created_cnt].bounds.y =  (-y + SEGMENT_H - 1) * 16; 
+                    obstacles[created_cnt].bounds.width = 1 * OBJECT_SIZE;
+                    obstacles[created_cnt].bounds.height = height * OBJECT_SIZE;
+                    obstacles[created_cnt].bounds.x = x * OBJECT_SIZE;
+                    obstacles[created_cnt].bounds.y =  (-y + SEGMENT_H - 1) * OBJECT_SIZE; 
 
                     created_cnt++;
 

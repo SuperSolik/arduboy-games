@@ -1,8 +1,11 @@
 #pragma once
 
 #include <Arduboy2.h>
-#include "rects_collision.h"
+
+#include "bitmaps.h"
+#include "game_global_constants.h"
 #include "player.h"
+#include "rects_collision.h"
 
 enum class ObstacleType : uint8_t {
   PLATFORM = 0,
@@ -141,13 +144,15 @@ struct Obstacle {
 
   void draw(const Arduboy2& a) {
     switch (this->_type) {
-      case ObstacleType::BLOCK:
-        a.drawRect(bounds.x, bounds.y, bounds.width, bounds.height, WHITE);
-        break;
       case ObstacleType::FLOOR:
         a.drawFastHLine(bounds.x, bounds.y, bounds.width, WHITE);
         break;
       default:
+        for (int16_t y = bounds.y; y < bounds.y + bounds.height; y += OBJECT_SIZE) {
+          for (int16_t x = bounds.x; x < bounds.x + bounds.width; x += OBJECT_SIZE) {
+            Sprites::drawSelfMasked(x, y, obstacles_sprites, static_cast<uint8_t>(_type));
+          }
+        }
         break;
     }
   }
