@@ -42,18 +42,7 @@ struct Player {
   void draw(const Arduboy2& a) {
     DO_DEBUG(
       a.print(is_grounded ? "g" : "n");
-    );// BlockObstacle(
-    //   WIDTH,
-    //   HEIGHT - (GROUND_Y + OBJECT_SIZE - 1),
-    //   OBJECT_SIZE * 2,
-    //   OBJECT_SIZE
-    // ),
-    // BlockObstacle(
-    //   WIDTH,
-    //   HEIGHT - (GROUND_Y + 2 * OBJECT_SIZE - 1),
-    //   OBJECT_SIZE * 2,
-    //   OBJECT_SIZE
-    // ),
+    );
     Sprites::drawSelfMasked(x-2, y-2, cube_sprite, animation_idx);
   }
 
