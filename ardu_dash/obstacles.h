@@ -42,7 +42,6 @@ struct Obstacle {
 
   void update() {
     bounds.x -= MOVE_SPEED;
-    // if (bounds.x + bounds.width < 0) enabled = false;
   }
 
   void set_x_offset(int16_t x_offset = 0) {

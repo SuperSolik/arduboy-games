@@ -101,8 +101,8 @@ class Game {
     uint16_t init_offset = WIDTH;
     int8_t added_obstacle_idx;
 
-    for(int8_t s_id = 2; s_id <= 4; s_id++) {
-      uint8_t created = parse_segment_map_to_obstacles(tmp_obstacles, segments[s_id].map);
+    for(int8_t s_id = 4; s_id <= 6; s_id++) {
+      uint8_t created = parse_segment_to_obstacles(tmp_obstacles, segments[s_id]);
 
       for (uint8_t i = 0; i < created; i++)  {
         // translate to world y
