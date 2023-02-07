@@ -71,9 +71,10 @@ struct Obstacle {
         break;
       case CollisionType::RIGHT:
         player.dead();
-        h = player.height;
-        w = player.x + player.width - bounds.x;
-        player.x = bounds.x - player.width;
+        // h = player.height;
+        // w = player.x + player.width - bounds.x;
+        // player.x = bounds.x - player.width;
+
         // DO_DEBUG(
         //   a.setCursor(0, 8);
         //   a.print("R\n");
@@ -86,8 +87,9 @@ struct Obstacle {
         w = player.x + player.width - bounds.x;
         h = bounds.y + bounds.height - player.y;
         if (h > player.height / 3) {
-          player.x = bounds.x - player.width;
           player.dead();
+          // player.x = bounds.x - player.width;
+          
           // DO_DEBUG(
           //   a.setCursor(0, 8);
           //   a.print("TR\n");
@@ -101,8 +103,9 @@ struct Obstacle {
         w = player.x + player.width - bounds.x;
         h = player.y + player.height - bounds.y;
         if (h > player.height / 3) {
-          player.x = bounds.x - player.width;
           player.dead();
+          // player.x = bounds.x - player.width;
+          
           // DO_DEBUG(
           //   a.setCursor(0, 8);
           //   a.print("BR\n");

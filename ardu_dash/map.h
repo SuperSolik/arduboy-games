@@ -15,6 +15,7 @@ enum class SegmentLoadOrientation : uint8_t {
 struct Segment {
     uint8_t start_height;
     uint8_t end_height;
+    uint8_t obstacle_cnt;
     SegmentLoadOrientation load_orientation;
 
     const char map[SEGMENT_H][SEGMENT_W];
@@ -24,6 +25,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 0,
         .end_height = 0,
+        .obstacle_cnt = 2,
         .load_orientation = SegmentLoadOrientation::VERTICAL,
         .map =  {
             "         ",
@@ -35,6 +37,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 0,
         .end_height = 0,
+        .obstacle_cnt = 6,
         .load_orientation = SegmentLoadOrientation::VERTICAL,
         .map =  {
             "         ",
@@ -46,6 +49,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 0,
         .end_height = 0,
+        .obstacle_cnt = 5,
         .load_orientation = SegmentLoadOrientation::VERTICAL,
         .map =  {
             "         ",
@@ -57,6 +61,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 0,
         .end_height = 0,
+        .obstacle_cnt = 2,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -68,6 +73,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 0,
         .end_height = 3,
+        .obstacle_cnt = 3,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -79,6 +85,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 3,
         .end_height = 0,
+        .obstacle_cnt = 3,
         .load_orientation = SegmentLoadOrientation::VERTICAL,
         .map =  {
             "         ",
@@ -90,6 +97,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 3,
         .end_height = 1,
+        .obstacle_cnt = 4,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -101,6 +109,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 2,
         .end_height = 2,
+        .obstacle_cnt = 1,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -112,6 +121,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 1,
         .end_height = 3,
+        .obstacle_cnt = 5,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -123,6 +133,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 1,
         .end_height = 1,
+        .obstacle_cnt = 5,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -134,6 +145,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 2,
         .end_height = 3,
+        .obstacle_cnt = 5,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -145,6 +157,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 1,
         .end_height = 1,
+        .obstacle_cnt = 2,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "xxxxxxxxx",
@@ -156,6 +169,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 1,
         .end_height = 1,
+        .obstacle_cnt = 4,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "xxxxxxxxx",
@@ -167,6 +181,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 1,
         .end_height = 2,
+        .obstacle_cnt = 4,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "xxxxxxxxx",
@@ -178,6 +193,7 @@ Segment segments[SEGMENT_CNT] {
     {
         .start_height = 3,
         .end_height = 3,
+        .obstacle_cnt = 5,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
         .map =  {
             "         ",
@@ -188,14 +204,6 @@ Segment segments[SEGMENT_CNT] {
     }
 };
 
-// constexpr uint8_t SEGMENTS_BY_LEVEL[3][10] {
-//     {0},
-//     {0},
-//     {0}
-// };
-
-
-// TODO take into account load orientation
 int8_t parse_vertical_segment_map_to_obstacles(Obstacle obstacles[SEGMENT_W], const char segment_map[SEGMENT_H][SEGMENT_W]) {
     int8_t start = 0;
     int8_t height;
@@ -220,7 +228,7 @@ int8_t parse_vertical_segment_map_to_obstacles(Obstacle obstacles[SEGMENT_W], co
                     if (created_cnt >= SEGMENT_W) return -1; // SHOULD NEVER HAPPEN, number of obstacles bigger than we can create
                     
                     // create obstacle
-                    // TODO: replace 16 with object size
+                    // TODO: refactor in a separate function?
                     obstacles[created_cnt].bounds.width = 1 * OBJECT_SIZE;
                     obstacles[created_cnt].bounds.height = height * OBJECT_SIZE;
                     obstacles[created_cnt].bounds.x = x * OBJECT_SIZE;
@@ -263,7 +271,6 @@ int8_t parse_horizontal_segment_map_to_obstacles(Obstacle obstacles[SEGMENT_W], 
                     if (created_cnt >= SEGMENT_W) return -1; // SHOULD NEVER HAPPEN, number of obstacles bigger than we can create
                     
                     // create obstacle
-                    // TODO: replace 16 with object size
                     obstacles[created_cnt].bounds.width = width * OBJECT_SIZE;
                     obstacles[created_cnt].bounds.height = 1 * OBJECT_SIZE;
                     obstacles[created_cnt].bounds.x = start * OBJECT_SIZE;

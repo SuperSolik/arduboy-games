@@ -49,7 +49,36 @@ class Game {
 
     this->arduboy.clear();
 
+
+    DO_DEBUG(
+      arduboy.setCursor(0, 0);
+      arduboy.print(player.is_grounded ? "g" : "n");
+    );
+
     player.update();
+    // TODO: use in level load
+    // we need to keep track of distance for segments preload
+    // when the player passed 2 * SEGMENT_W * OBJECT_SIZE pixels,
+    // it means that the segment is completely gone,
+    // (also the start offset of the new segment 
+    //  just got reduced by SEGMENT_W * OBJECT_SIZE)
+    // and we need to load a new one
+    player_distance += Obstacle::MOVE_SPEED;    
+    int8_t level_passed_cnt = player_distance / 160;
+
+    // print segment distance passed counter
+    DO_DEBUG(
+      arduboy.setCursor(0, 16);
+      arduboy.print(level_passed_cnt, 10);
+    );
+
+    
+    
+    // print obstacle count
+    DO_DEBUG(
+      arduboy.setCursor(0, 32);
+      arduboy.print(obstacle_pool_free_size);
+    );
 
     floor.interact(player, arduboy);
     
@@ -73,6 +102,8 @@ class Game {
       12
     );
 
+    player_distance = -160;
+
     // create special obstacle representing floor
     floor = Obstacle(
       0, HEIGHT - GROUND_Y, WIDTH, 0,
@@ -91,6 +122,8 @@ class Game {
       o.enabled = false;
     }
 
+    obstacle_pool_free_size = OBSTACLES_POOL_CAP;
+
     // initialize obstacles, hardcoded for now
     // TODO: add continuous generation (add new obstacles offscreen)
     //       when some portion of present obstacles have passed
@@ -101,10 +134,15 @@ class Game {
     uint16_t init_offset = WIDTH;
     int8_t added_obstacle_idx;
 
-    for(int8_t s_id = 4; s_id <= 6; s_id++) {
-      uint8_t created = parse_segment_to_obstacles(tmp_obstacles, segments[s_id]);
+    // hardcoded segments for now
+    for(int8_t s_id = 4; s_id <= 7; s_id++) {
+      Segment& next_seg = segments[s_id];
+      if (obstacle_pool_free_size < next_seg.obstacle_cnt) {
+        break;
+      }
+      uint8_t parsed_obstacles_cnt = parse_segment_to_obstacles(tmp_obstacles, next_seg);
 
-      for (uint8_t i = 0; i < created; i++)  {
+      for (uint8_t i = 0; i < parsed_obstacles_cnt; i++)  {
         // translate to world y
         tmp_obstacles[i].to_world_y(HEIGHT);
 
@@ -165,6 +203,7 @@ class Game {
         if (!obstacle_pool[i].enabled) {
             obstacle_pool[i] = o;
             obstacle_pool[i].enabled = true;
+            --obstacle_pool_free_size;
             return i;
         }
     }
@@ -174,6 +213,7 @@ class Game {
   bool obstacle_remove_from_pool(int8_t obstacle_index) {
     if (obstacle_index >= OBSTACLES_POOL_CAP || obstacle_index < 0) return false;
     obstacle_pool[obstacle_index].enabled = false;
+    obstacle_pool_free_size++;
     return true;
   }
 
@@ -189,4 +229,7 @@ class Game {
   Obstacle floor;
 
   Obstacle obstacle_pool[OBSTACLES_POOL_CAP];
+  int16_t obstacle_pool_free_size;
+
+  int16_t player_distance;
 };

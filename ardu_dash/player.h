@@ -40,9 +40,6 @@ struct Player {
   }
 
   void draw(const Arduboy2& a) {
-    DO_DEBUG(
-      a.print(is_grounded ? "g" : "n");
-    );
     Sprites::drawSelfMasked(x-2, y-2, cube_sprite, animation_idx);
   }
 
@@ -77,6 +74,7 @@ struct Player {
   }
 
   void dead() {
+    // TOOD: start death animation
     is_dead = true;
   }
 
