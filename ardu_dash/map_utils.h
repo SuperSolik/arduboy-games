@@ -15,7 +15,7 @@ int8_t parse_vertical_segment_map_to_obstacles(Obstacle obstacles[SEGMENT_W], co
         height = 0;
         
         for (int8_t y = SEGMENT_H - 1; y >= 0; y--) {
-            if (segment_map[y][x] == 'x') {
+            if ((char)pgm_read_byte(&segment_map[y][x]) == 'x') {
                 if (start == -1) {
                     // start of the obstacle
                     start = y;
@@ -58,7 +58,7 @@ int8_t parse_horizontal_segment_map_to_obstacles(Obstacle obstacles[SEGMENT_W], 
         width = 0;
         
         for (uint8_t x = 0; x < SEGMENT_W; x++) {
-            if (segment_map[y][x] == 'x') {
+            if ((char)pgm_read_byte(&segment_map[y][x]) == 'x') {
                 if (start == -1) {
                     // start of the obstacle
                     start = x;
@@ -92,9 +92,9 @@ int8_t parse_horizontal_segment_map_to_obstacles(Obstacle obstacles[SEGMENT_W], 
 
 int8_t parse_segment_to_obstacles(Obstacle obstacles[SEGMENT_W], const Segment& seg) {
     if (seg.load_orientation == SegmentLoadOrientation::HORIZONTAL){
-        return parse_horizontal_segment_map_to_obstacles(obstacles, seg.map);
+        return parse_horizontal_segment_map_to_obstacles(obstacles, SEGMENT_MAPS[seg.map_idx]);
     } else {
-        return parse_vertical_segment_map_to_obstacles(obstacles, seg.map);
+        return parse_vertical_segment_map_to_obstacles(obstacles, SEGMENT_MAPS[seg.map_idx]);
     }
 }
 
