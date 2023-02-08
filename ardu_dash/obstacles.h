@@ -75,13 +75,13 @@ struct Obstacle {
         // w = player.x + player.width - bounds.x;
         // player.x = bounds.x - player.width;
 
-        // DO_DEBUG(
-        //   a.setCursor(0, 8);
-        //   a.print("R\n");
-        //   a.print(w);
-        //   a.print(" ");
-        //   a.print(h);
-        // );
+        DO_DEBUG(
+          a.setCursor(0, 8);
+          a.print("R\n");
+          a.print(w);
+          a.print(" ");
+          a.print(h);
+        );
         break;
       case CollisionType::TOP_RIGHT:
         w = player.x + player.width - bounds.x;
@@ -90,29 +90,34 @@ struct Obstacle {
           player.dead();
           // player.x = bounds.x - player.width;
           
-          // DO_DEBUG(
-          //   a.setCursor(0, 8);
-          //   a.print("TR\n");
-          //   a.print(w);
-          //   a.print(" ");
-          //   a.print(h);
-          // );
+          DO_DEBUG(
+            a.setCursor(0, 8);
+            a.print("TR\n");
+            a.print(w);
+            a.print(" ");
+            a.print(h);
+          );
         }
         break;
       case CollisionType::BOTTOM_RIGHT:
         w = player.x + player.width - bounds.x;
         h = player.y + player.height - bounds.y;
         if (h > player.height / 3) {
-          player.dead();
+          if(w >= player.width / 2) {
+            player.y = bounds.y - player.height;
+          } else {
+            player.dead();
+          }
+        
           // player.x = bounds.x - player.width;
           
-          // DO_DEBUG(
-          //   a.setCursor(0, 8);
-          //   a.print("BR\n");
-          //   a.print(w);
-          //   a.print(" ");
-          //   a.print(h);
-          // );
+          DO_DEBUG(
+            a.setCursor(0, 8);
+            a.print("BR\n");
+            a.print(w);
+            a.print(" ");
+            a.print(h);
+          );
         }
         break;
       default:

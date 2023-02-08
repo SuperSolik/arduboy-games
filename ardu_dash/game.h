@@ -4,7 +4,7 @@
 #include "bitmaps.h"
 #include "player.h"
 #include "obstacles.h"
-#include "map.h"
+#include "map_utils.h"
 #include "game_global_constants.h"
 
 
@@ -16,7 +16,7 @@ class Game {
   static constexpr uint8_t STARS_CNT = 55;
   static constexpr uint8_t STARS_SPEED = 1;
   static constexpr uint8_t PLAYER_X = 32 - OBJECT_SIZE;
-  static constexpr uint8_t OBSTACLES_POOL_CAP = 32;
+  static constexpr uint8_t OBSTACLES_POOL_CAP = 20;
 
  public:
   Game(uint8_t fps = DEFAULT_FPS) {
@@ -28,12 +28,19 @@ class Game {
     this->arduboy.setFrameRate(fps);
     this->arduboy.initRandomSeed();
     this->reset();
+    arduboy.display();
   }
 
   void run() {
     if (!arduboy.nextFrame()) return;
-
-    // do level load/generation
+    
+    // do level generation
+    if (load_cnt > 0) {
+      load_cnt = preload_obstacle_segments(load_cnt);
+    } else if (do_preload) {
+      load_cnt = preload_obstacle_segments(1);
+      do_preload = false;
+    }
 
     arduboy.pollButtons();
 
@@ -56,24 +63,22 @@ class Game {
     );
 
     player.update();
-    // TODO: use in level load
-    // we need to keep track of distance for segments preload
-    // when the player passed 2 * SEGMENT_W * OBJECT_SIZE pixels,
-    // it means that the segment is completely gone,
-    // (also the start offset of the new segment 
-    //  just got reduced by SEGMENT_W * OBJECT_SIZE)
-    // and we need to load a new one
-    player_distance += Obstacle::MOVE_SPEED;    
-    int8_t level_passed_cnt = player_distance / 160;
 
+    player_distance += Obstacle::MOVE_SPEED;
+    new_level_cnt = player_distance / 160;
+    if (level_cnt != new_level_cnt) {
+      do_preload = true;
+      init_offset -= SEGMENT_W * OBJECT_SIZE;
+    }
+
+    level_cnt = new_level_cnt;
+  
     // print segment distance passed counter
     DO_DEBUG(
       arduboy.setCursor(0, 16);
-      arduboy.print(level_passed_cnt, 10);
+      arduboy.print(new_level_cnt, 10);
     );
 
-    
-    
     // print obstacle count
     DO_DEBUG(
       arduboy.setCursor(0, 32);
@@ -102,7 +107,7 @@ class Game {
       12
     );
 
-    player_distance = -160;
+    player_distance = 0;
 
     // create special obstacle representing floor
     floor = Obstacle(
@@ -123,34 +128,41 @@ class Game {
     }
 
     obstacle_pool_free_size = OBSTACLES_POOL_CAP;
+    last_segment_height = 0;
+    this->init_offset = WIDTH;
 
-    // initialize obstacles, hardcoded for now
-    // TODO: add continuous generation (add new obstacles offscreen)
-    //       when some portion of present obstacles have passed
-    //       figure out how to change start offsets
+    load_cnt = preload_obstacle_segments(3);
+    do_preload = false;
+    level_cnt = 0;
+  }
 
-    Obstacle tmp_obstacles[10];
+  int8_t preload_obstacle_segments(int8_t segments_cnt) {
+    uint8_t added_obstacle_idx;
+    uint8_t parsed_obstacles_cnt;
+    int8_t i = 0;
 
-    uint16_t init_offset = WIDTH;
-    int8_t added_obstacle_idx;
+    Obstacle tmp_obstacles[SEGMENT_W];
 
-    // hardcoded segments for now
-    for(int8_t s_id = 4; s_id <= 7; s_id++) {
-      Segment& next_seg = segments[s_id];
-      if (obstacle_pool_free_size < next_seg.obstacle_cnt) {
-        break;
+    while(i < segments_cnt) {
+      uint8_t index = segment_from_heigth(last_segment_height);
+
+      if (obstacle_pool_free_size < SEGMENTS[index].obstacle_cnt) {
+        // return number of segments left to add
+        return segments_cnt - i;
       }
-      uint8_t parsed_obstacles_cnt = parse_segment_to_obstacles(tmp_obstacles, next_seg);
 
-      for (uint8_t i = 0; i < parsed_obstacles_cnt; i++)  {
+      last_segment_height = SEGMENTS[index].end_height;
+      parsed_obstacles_cnt = parse_segment_to_obstacles(tmp_obstacles, SEGMENTS[index]);
+
+      for (uint8_t j = 0; j < parsed_obstacles_cnt; j++)  {
         // translate to world y
-        tmp_obstacles[i].to_world_y(HEIGHT);
+        tmp_obstacles[j].to_world_y(HEIGHT);
 
         // add to pool
         // TODO: refactor to avoid data copy from temp obstacles
         //       to obstacle pool (use pointers or/and copy constructors)
         added_obstacle_idx = obstacle_add_to_pool(
-          tmp_obstacles[i]
+          tmp_obstacles[j]
         );
         
         obstacle_pool[added_obstacle_idx].set_x_offset(init_offset);
@@ -158,17 +170,27 @@ class Game {
 
       // update the initial offset
       init_offset += SEGMENT_W * OBJECT_SIZE;
+
+      i += 1;
     }
+
+    return segments_cnt - i;
   }
 
   void update_and_draw_obstacles() {
+    
     for (uint8_t obstacle_index = 0; obstacle_index < OBSTACLES_POOL_CAP; obstacle_index++) {
-      if (obstacle_pool[obstacle_index].enabled) {
+      Obstacle& o = obstacle_pool[obstacle_index];
+
+      if (o.enabled) {
         // move obstacle && interact with player
-        obstacle_pool[obstacle_index].update();
+        o.update();
         // TODO: interact only with close obstacles
         //       (relative to the player pos, += 4 * OBJECT_SIZE should do?)
-        obstacle_pool[obstacle_index].interact(this->player, arduboy);
+        if (o.bounds.x + o.bounds.width >= player.x) {
+          // if obstacle is not behind
+          obstacle_pool[obstacle_index].interact(this->player, arduboy);
+        }
         obstacle_pool[obstacle_index].draw(this->arduboy);
 
         // if obstacle out of screen -> remove
@@ -228,8 +250,15 @@ class Game {
 
   Obstacle floor;
 
-  Obstacle obstacle_pool[OBSTACLES_POOL_CAP];
-  int16_t obstacle_pool_free_size;
+  uint8_t last_segment_height;
+  int16_t init_offset;
 
+  int8_t obstacle_pool_free_size;
   int16_t player_distance;
+  int8_t load_cnt;
+  uint16_t level_cnt;
+  uint16_t new_level_cnt;
+  bool do_preload;
+
+  Obstacle obstacle_pool[OBSTACLES_POOL_CAP];
 };
