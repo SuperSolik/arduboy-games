@@ -18,8 +18,8 @@ const char PROGMEM SEGMENT_MAPS[SEGMENT_CNT][SEGMENT_H][SEGMENT_W] = {
     },
     {
         "         ",
-        "         ",
-        "    xx   ",
+        "      -- ",
+        "    x    ",
         " xxxxxxx "
     },
     {

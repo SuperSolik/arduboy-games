@@ -49,7 +49,7 @@ struct Obstacle {
     bounds.x += x_offset;
   }
 
-  void block_interact(Player& player, const Arduboy2& a) {
+  static void block_interact(Player& player, const Rect& bounds, const Arduboy2& a) {
     uint8_t w = 0, h = 0;
 
     switch (collide_rects(player.rect(), bounds)) {
@@ -126,20 +126,25 @@ struct Obstacle {
     }
   }
 
-  void floor_interact(Player& player, const Arduboy2& a) {
-    if (player.y + player.height >= this->bounds.y) {
+  static void floor_interact(Player& player, const Rect& bounds, const Arduboy2& a) {
+    if (player.y + player.height >= bounds.y) {
       player.ground();
-      player.y = this->bounds.y - player.height;
+      player.y = bounds.y - player.height;
     }
   }
 
   void interact(Player& player, const Arduboy2& a) {
     switch (this->_type) {
       case ObstacleType::BLOCK:
-        this->block_interact(player, a);
+        Obstacle::block_interact(player, bounds, a);
+        break;
+      case ObstacleType::PLATFORM:
+        // TODO: works a bit funny if the blayer collides with platform upfront, 
+        // but as long as platform are high in the air (1 block above the bottom block), works fine
+        Obstacle::block_interact(player, Rect(bounds.x, bounds.y, bounds.width, 7), a);
         break;
       case ObstacleType::FLOOR:
-        this->floor_interact(player, a);
+        Obstacle::floor_interact(player, bounds, a);
         break;
       default:
         break;
