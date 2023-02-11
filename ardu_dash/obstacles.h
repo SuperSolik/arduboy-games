@@ -13,6 +13,7 @@ enum class ObstacleType : uint8_t {
   SPIKE = 2,
   COUNT = 3,
   FLOOR = 4,  // special technical obstacle
+  UNKNOWN = 5, // special technical obstacle for parsing
 };
 
 struct Obstacle {

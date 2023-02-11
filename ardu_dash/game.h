@@ -16,7 +16,7 @@ class Game {
   static constexpr uint8_t STARS_CNT = 55;
   static constexpr uint8_t STARS_SPEED = 1;
   static constexpr uint8_t PLAYER_X = 32 - OBJECT_SIZE;
-  static constexpr uint8_t OBSTACLES_POOL_CAP = 20;
+  static constexpr uint8_t OBSTACLES_POOL_CAP = 48;
 
  public:
   Game(uint8_t fps = DEFAULT_FPS) {
@@ -144,7 +144,7 @@ class Game {
     Obstacle tmp_obstacles[SEGMENT_W];
 
     while(i < segments_cnt) {
-      uint8_t index = segment_from_heigth(last_segment_height);
+      uint8_t index = segment_from_height(last_segment_height);
 
       if (obstacle_pool_free_size < SEGMENTS[index].obstacle_cnt) {
         // return number of segments left to add

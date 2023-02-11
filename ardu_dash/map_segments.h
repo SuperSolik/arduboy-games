@@ -11,10 +11,10 @@ enum class SegmentLoadOrientation : uint8_t {
 
 const char PROGMEM SEGMENT_MAPS[SEGMENT_CNT][SEGMENT_H][SEGMENT_W] = {
     {
-        "         ",
-        "         ",
-        "         ",
-        "  x   x  "
+        "        ",
+        "        ",
+        "    x  x",
+        "  x x^^x "
     },
     {
         "         ",
@@ -26,11 +26,11 @@ const char PROGMEM SEGMENT_MAPS[SEGMENT_CNT][SEGMENT_H][SEGMENT_W] = {
         " xxxxxxx ",
         "         ",
         "         ",
-        " xxxxxxx "
+        " xxx^^xx "
     },
     {
         "         ",
-        "     xx  ",
+        "     --  ",
         "   x     ",
         " xx    xx"
     },
@@ -48,21 +48,21 @@ const Segment SEGMENTS[SEGMENT_CNT] {
     {
         .start_height = 0,
         .end_height = 0,
-        .obstacle_cnt = 2,
+        .obstacle_cnt = 5,
         .map_idx = 0,
         .load_orientation = SegmentLoadOrientation::VERTICAL,
     },
     {
         .start_height = 0,
         .end_height = 0,
-        .obstacle_cnt = 2,
+        .obstacle_cnt = 3,
         .map_idx = 1,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
     },
     {
         .start_height = 0,
         .end_height = 0,
-        .obstacle_cnt = 2,
+        .obstacle_cnt = 4,
         .map_idx = 2,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
     },
