@@ -37,38 +37,30 @@ const char PROGMEM SEGMENT_MAPS[SEGMENT_CNT][SEGMENT_H][SEGMENT_W] = {
 };
 
 struct Segment {
-    uint8_t start_height;
-    uint8_t end_height;
+    // uint8_t start_height;
+    // uint8_t end_height;
     uint8_t obstacle_cnt;
     uint8_t map_idx;
     SegmentLoadOrientation load_orientation;
 };
 
-const Segment SEGMENTS[SEGMENT_CNT] {
+const Segment SEGMENTS_METADATA[SEGMENT_CNT] {
     {
-        .start_height = 0,
-        .end_height = 0,
         .obstacle_cnt = 5,
         .map_idx = 0,
         .load_orientation = SegmentLoadOrientation::VERTICAL,
     },
     {
-        .start_height = 0,
-        .end_height = 0,
         .obstacle_cnt = 3,
         .map_idx = 1,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
     },
     {
-        .start_height = 0,
-        .end_height = 0,
         .obstacle_cnt = 4,
         .map_idx = 2,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,
     },
     {
-        .start_height = 0,
-        .end_height = 1,
         .obstacle_cnt = 4,
         .map_idx = 3,
         .load_orientation = SegmentLoadOrientation::HORIZONTAL,

@@ -128,7 +128,7 @@ class Game {
     }
 
     obstacle_pool_free_size = OBSTACLES_POOL_CAP;
-    last_segment_height = 0;
+    // last_segment_height = 0;
     this->init_offset = WIDTH;
 
     load_cnt = preload_obstacle_segments(3);
@@ -137,40 +137,39 @@ class Game {
   }
 
   int8_t preload_obstacle_segments(int8_t segments_cnt) {
-    uint8_t added_obstacle_idx;
+    // int16_t added_obstacle_idx;
     uint8_t parsed_obstacles_cnt;
+    uint8_t segment_idx;
     int8_t i = 0;
 
     Obstacle tmp_obstacles[SEGMENT_W];
 
     while(i < segments_cnt) {
-      uint8_t index = segment_from_height(last_segment_height);
+      // TODO: rename to smth like get_next_segment(last_added_segment_idx)
+      segment_idx = segment_from_height(0);
 
-      if (obstacle_pool_free_size < SEGMENTS[index].obstacle_cnt) {
+      if (obstacle_pool_free_size < SEGMENTS_METADATA[segment_idx].obstacle_cnt) {
         // return number of segments left to add
         return segments_cnt - i;
       }
 
-      last_segment_height = SEGMENTS[index].end_height;
-      parsed_obstacles_cnt = parse_segment_to_obstacles(tmp_obstacles, SEGMENTS[index]);
+      // last_segment_height = SEGMENTS_METADATA[index].end_height;
+      parsed_obstacles_cnt = parse_segment_to_obstacles(tmp_obstacles, SEGMENTS_METADATA[segment_idx]);
 
       for (uint8_t j = 0; j < parsed_obstacles_cnt; j++)  {
-        // translate to world y
+        // translate to world y && x offset
         tmp_obstacles[j].to_world_y(HEIGHT);
+        tmp_obstacles[j].set_x_offset(init_offset);
 
         // add to pool
         // TODO: refactor to avoid data copy from temp obstacles
         //       to obstacle pool (use pointers or/and copy constructors)
-        added_obstacle_idx = obstacle_add_to_pool(
-          tmp_obstacles[j]
-        );
-        
-        obstacle_pool[added_obstacle_idx].set_x_offset(init_offset);
+        obstacle_add_to_pool(tmp_obstacles[j]);
       }
 
       // update the initial offset
       init_offset += SEGMENT_W * OBJECT_SIZE;
-
+      last_added_segment_idx = segment_idx;
       i += 1;
     }
 
@@ -250,7 +249,8 @@ class Game {
 
   Obstacle floor;
 
-  uint8_t last_segment_height;
+  // uint8_t last_segment_height;
+  uint8_t last_added_segment_idx;
   int16_t init_offset;
 
   int8_t obstacle_pool_free_size;

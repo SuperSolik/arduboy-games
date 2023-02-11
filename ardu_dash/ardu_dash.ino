@@ -1,7 +1,7 @@
 #include <Arduboy2.h>
 #include "game.h"
 
-Game game(28);
+Game game;
 
 void setup () {
   game.init();
