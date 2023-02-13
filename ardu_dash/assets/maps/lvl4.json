@@ -24,7 +24,7 @@
         {
          "name":"links",
          "type":"string",
-         "value":"lvl5;"
+         "value":"lvl5;lvl3;lvl2"
         }, 
         {
          "name":"obstacle_count",
