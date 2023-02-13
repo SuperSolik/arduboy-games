@@ -8,12 +8,12 @@
 #include "rects_collision.h"
 
 enum class ObstacleType : uint8_t {
-  PLATFORM = 0,
-  BLOCK = 1,
-  SPIKE = 2,
-  COUNT = 3,
-  FLOOR = 4,  // special technical obstacle
-  UNKNOWN = 5, // special technical obstacle for parsing
+  UNKNOWN = 0,  // special technical obstacle for parsing
+  PLATFORM = 1,
+  BLOCK = 2,
+  SPIKE = 3,
+  COUNT = 4,
+  FLOOR = 5,    // special technical obstacle
 };
 
 struct Obstacle {
@@ -163,7 +163,7 @@ struct Obstacle {
       default:
         for (int16_t y = bounds.y; y < bounds.y + bounds.height; y += OBJECT_SIZE) {
           for (int16_t x = bounds.x; x < bounds.x + bounds.width; x += OBJECT_SIZE) {
-            Sprites::drawSelfMasked(x, y, obstacles_sprites, static_cast<uint8_t>(_type));
+            Sprites::drawSelfMasked(x, y, obstacles_sprites, static_cast<uint8_t>(_type)-1);
           }
         }
         break;

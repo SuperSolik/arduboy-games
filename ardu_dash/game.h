@@ -65,7 +65,7 @@ class Game {
     player.update();
 
     player_distance += Obstacle::MOVE_SPEED;
-    new_level_cnt = player_distance / 160;
+    new_level_cnt = player_distance / (SEGMENT_W * OBJECT_SIZE);
     if (level_cnt != new_level_cnt) {
       do_preload = true;
       init_offset -= SEGMENT_W * OBJECT_SIZE;
@@ -130,8 +130,9 @@ class Game {
     obstacle_pool_free_size = OBSTACLES_POOL_CAP;
     // last_segment_height = 0;
     this->init_offset = WIDTH;
+    last_added_segment_idx = -1;
 
-    load_cnt = preload_obstacle_segments(3);
+    load_cnt = preload_obstacle_segments(2);
     do_preload = false;
     level_cnt = 0;
   }
@@ -145,8 +146,7 @@ class Game {
     Obstacle tmp_obstacles[SEGMENT_W];
 
     while(i < segments_cnt) {
-      // TODO: rename to smth like get_next_segment(last_added_segment_idx)
-      segment_idx = segment_from_height(0);
+      segment_idx = next_segment(last_added_segment_idx);
 
       if (obstacle_pool_free_size < SEGMENTS_METADATA[segment_idx].obstacle_cnt) {
         // return number of segments left to add
@@ -154,7 +154,7 @@ class Game {
       }
 
       // last_segment_height = SEGMENTS_METADATA[index].end_height;
-      parsed_obstacles_cnt = parse_segment_to_obstacles(tmp_obstacles, SEGMENTS_METADATA[segment_idx]);
+      parsed_obstacles_cnt = parse_segment_to_obstacles(tmp_obstacles, segment_idx);
 
       for (uint8_t j = 0; j < parsed_obstacles_cnt; j++)  {
         // translate to world y && x offset
@@ -250,7 +250,7 @@ class Game {
   Obstacle floor;
 
   // uint8_t last_segment_height;
-  uint8_t last_added_segment_idx;
+  int8_t last_added_segment_idx;
   int16_t init_offset;
 
   int8_t obstacle_pool_free_size;

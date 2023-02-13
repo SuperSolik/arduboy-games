@@ -29,7 +29,7 @@
         {
          "name":"obstacle_count",
          "type":"int",
-         "value":10
+         "value":9
         }, 
         {
          "name":"parse_vertical",
