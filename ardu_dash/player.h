@@ -4,9 +4,9 @@
 #include "debug_helper.h"
 #include "bitmaps.h"
 
-constexpr static uint8_t PLAYER_JUMP_LENGTH = 18;
+constexpr static uint8_t PLAYER_JUMP_LENGTH = 16;
 constexpr static int8_t PLAYER_JUMP_Y[PLAYER_JUMP_LENGTH] = {
-    -8, -4, -4, -3, -3, -2, -2, -1, -1, 1, 1, 2, 2, 3, 3, 4, 4, 8
+    -6, -5, -4, -3, -3, -2, -2, -1, 1, 2, 2, 3, 3, 4, 5, 6
 };
 
 struct Player {

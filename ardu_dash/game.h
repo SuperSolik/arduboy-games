@@ -13,7 +13,7 @@ static constexpr uint8_t GROUND_Y = 1;
 
 class Game {
   static constexpr uint8_t DEFAULT_FPS = 24;
-  static constexpr uint8_t STARS_CNT = 55;
+  static constexpr uint8_t STARS_CNT = 25;
   static constexpr uint8_t STARS_SPEED = 1;
   static constexpr uint8_t PLAYER_X = 32 - OBJECT_SIZE;
   static constexpr uint8_t OBSTACLES_POOL_CAP = 48;
@@ -183,7 +183,7 @@ class Game {
 
       if (o.enabled) {
         // move obstacle && interact with player
-        o.update();
+        o.update(arduboy.everyXFrames(12));
         // TODO: interact only with close obstacles
         //       (relative to the player pos, += 4 * OBJECT_SIZE should do?)
         if (o.bounds.x + o.bounds.width >= player.x) {
@@ -209,10 +209,8 @@ class Game {
       }
       if (i % 2 == 0) {
         stars[i].x -= STARS_SPEED;
-      } else if (i % 3 == 0) {
-        stars[i].x -= STARS_SPEED * 2;
       } else {
-        stars[i].x -= STARS_SPEED * 3;
+        stars[i].x -= STARS_SPEED * 2;
       }
 
       arduboy.drawPixel(stars[i].x, stars[i].y, WHITE);
