@@ -148,7 +148,10 @@ struct Obstacle {
         Obstacle::block_interact(player, Rect(bounds.x, bounds.y, bounds.width, 7), a);
         break;
       case ObstacleType::SAW:
-        if (Arduboy2::collide(player.rect(), Rect(bounds.x+4, bounds.y+8, bounds.width - 8, 8))) {
+        // TODO: bugged as well on long obstacles of type SAW, player seems to be just passing trough
+        // until the end
+        // probably need better collision model
+        if (Arduboy2::collide(player.rect(), Rect(bounds.x+4, bounds.y+8, bounds.width - 8, bounds.height - 8))) {
           player.dead();
         }
         // Obstacle::block_interact(player, Rect(bounds.x+3, bounds.y+3, 10, 13), a);
