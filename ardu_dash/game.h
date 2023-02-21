@@ -13,6 +13,10 @@ static constexpr uint8_t GROUND_Y = 1;
 
 class Game {
   static constexpr uint8_t DEFAULT_FPS = 24;
+  static constexpr uint8_t EEPROM_START_C1 = EEPROM_STORAGE_SPACE_START;
+  static constexpr uint8_t EEPROM_START_C2 =  EEPROM_START_C1 + 1;
+  static constexpr uint8_t EEPROM_START_C3 =  EEPROM_START_C1 + 2;
+  static constexpr uint8_t EEPROM_SAVE_DATA =  EEPROM_START_C1 + 3;
   static constexpr uint8_t STARS_CNT = 25;
   static constexpr uint8_t STARS_SPEED = 1;
   static constexpr uint8_t PLAYER_X = 32 - OBJECT_SIZE;
@@ -49,6 +53,12 @@ class Game {
     }
 
     if (player.is_dead) {
+      uint16_t cur_score = player_distance / fps;
+      if (cur_score > max_score) {
+        max_score = cur_score;
+        save_score_to_eeprom();
+      }
+
       this->arduboy.delayShort(1000);
       this->reset();
       return;
@@ -56,6 +66,10 @@ class Game {
 
     this->arduboy.clear();
 
+    arduboy.setCursor(0, 0);
+    arduboy.print(max_score);
+    arduboy.setCursor(0, 8);
+    arduboy.print(player_distance / fps);
 
     DO_DEBUG(
       arduboy.setCursor(0, 0);
@@ -98,7 +112,34 @@ class Game {
   }
 
  private:
+  void reset_score() {
+    this->max_score = 0;
+    this->save_score_to_eeprom();
+  }
+
+  void load_score_from_eeprom() {
+    uint8_t c1 = EEPROM.read(EEPROM_START_C1);
+    uint8_t c2 = EEPROM.read(EEPROM_START_C2);
+    uint8_t c3 = EEPROM.read(EEPROM_START_C3);
+
+    if (c1 != 'G' || c2 != 'E' || c3 != 'M') { 
+      this->reset_score();
+    } else {
+      EEPROM.get(EEPROM_SAVE_DATA, this->max_score);
+    }
+  }
+
+  void save_score_to_eeprom() {
+    EEPROM.update(EEPROM_START_C1, 'G');
+    EEPROM.update(EEPROM_START_C2, 'E');
+    EEPROM.update(EEPROM_START_C3, 'M');
+    EEPROM.put(EEPROM_SAVE_DATA, this->max_score);
+  }
+
+
   void reset() {
+    load_score_from_eeprom();
+
     // create player
     player = Player(
       PLAYER_X,
@@ -252,7 +293,8 @@ class Game {
   int16_t init_offset;
 
   int8_t obstacle_pool_free_size;
-  int16_t player_distance;
+  uint16_t player_distance;
+  uint16_t max_score;
   int8_t load_cnt;
   uint16_t level_cnt;
   uint16_t new_level_cnt;
