@@ -8,8 +8,12 @@
 #include "game_global_constants.h"
 
 
-static constexpr uint8_t GROUND_Y = 1;
+enum class GameState: uint8_t {
+  TITLE_SCREEN = 0,
+  GAMEPLAY = 1,
+};
 
+static constexpr uint8_t GROUND_Y = 1;
 
 class Game {
   static constexpr uint8_t DEFAULT_FPS = 24;
@@ -32,10 +36,47 @@ class Game {
     this->arduboy.setFrameRate(fps);
     this->arduboy.initRandomSeed();
     this->reset();
-    arduboy.display();
+    this->state = GameState::TITLE_SCREEN;
   }
 
-  void run() {
+
+  void run(){
+    switch (state) {
+      case GameState::TITLE_SCREEN:
+        title_screen();
+        break;
+      case GameState::GAMEPLAY:
+        gameplay();
+        break;
+    }
+  }
+  
+ private:
+  void title_screen() {
+    arduboy.clear();
+    arduboy.pollButtons();
+
+    if (arduboy.pressed((UP_BUTTON | DOWN_BUTTON))) {
+      if (!reset_score()) {
+        this->arduboy.setCursor(0, 0);
+        this->arduboy.print(F("score reset"));
+      }
+    }
+
+    if (arduboy.justPressed(A_BUTTON)) {
+      this->state = GameState::GAMEPLAY;
+      return;
+    }
+
+    arduboy.drawCompressed(25, 10, compressed_logo);
+    arduboy.drawCompressed(35, 25 + 20, press_a_to_play);
+
+    arduboy.display();
+  } 
+
+
+
+  void gameplay() {
     if (!arduboy.nextFrame()) return;
     
     // do level generation
@@ -116,10 +157,13 @@ class Game {
     this->arduboy.display();
   }
 
- private:
-  void reset_score() {
+
+  bool reset_score() {
+    if (this->max_score == 0) return false;
+
     this->max_score = 0;
     this->save_score_to_eeprom();
+    return true;
   }
 
   void load_score_from_eeprom() {
@@ -309,6 +353,7 @@ class Game {
   uint16_t new_level_cnt;
   bool do_preload;
   bool on_pause;
+  GameState state;
 
   Obstacle obstacle_pool[OBSTACLES_POOL_CAP];
 };
