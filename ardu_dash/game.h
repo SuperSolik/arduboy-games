@@ -52,6 +52,10 @@ class Game {
       player.start_jump();
     }
 
+    if (arduboy.justPressed(DOWN_BUTTON)) {
+      on_pause = !on_pause;
+    }
+
     if (player.is_dead) {
       uint16_t cur_score = player_distance / fps;
       if (cur_score > max_score) {
@@ -76,16 +80,17 @@ class Game {
       arduboy.print(player.is_grounded ? "g" : "n");
     );
 
-    player.update();
+    player.update(!on_pause);
 
-    player_distance += Obstacle::MOVE_SPEED;
-    new_level_cnt = player_distance / (SEGMENT_W * OBJECT_SIZE);
-    if (level_cnt != new_level_cnt) {
-      do_preload = true;
-      init_offset -= SEGMENT_W * OBJECT_SIZE;
+    if (!on_pause) {
+      player_distance += Obstacle::MOVE_SPEED;
+      new_level_cnt = player_distance / (SEGMENT_W * OBJECT_SIZE);
+      if (level_cnt != new_level_cnt) {
+        do_preload = true;
+        init_offset -= SEGMENT_W * OBJECT_SIZE;
+      }
+      level_cnt = new_level_cnt;
     }
-
-    level_cnt = new_level_cnt;
   
     // print segment distance passed counter
     DO_DEBUG(
@@ -102,8 +107,8 @@ class Game {
     floor.interact(player, arduboy);
     
 
-    this->update_and_draw_backgroud();
-    this->update_and_draw_obstacles();
+    this->update_and_draw_backgroud(!on_pause);
+    this->update_and_draw_obstacles(!on_pause);
 
     floor.draw(this->arduboy);  
     player.draw(this->arduboy);
@@ -176,6 +181,7 @@ class Game {
     load_cnt = preload_obstacle_segments(2);
     do_preload = false;
     level_cnt = 0;
+    on_pause = false;
   }
 
   int8_t preload_obstacle_segments(int8_t segments_cnt) {
@@ -217,14 +223,14 @@ class Game {
     return segments_cnt - i;
   }
 
-  void update_and_draw_obstacles() {
+  void update_and_draw_obstacles(bool do_update = true) {
     
     for (uint8_t obstacle_index = 0; obstacle_index < OBSTACLES_POOL_CAP; obstacle_index++) {
       Obstacle& o = obstacle_pool[obstacle_index];
 
       if (o.enabled) {
         // move obstacle && interact with player
-        o.update(arduboy.everyXFrames(12));
+        o.update(do_update, arduboy.everyXFrames(12));
         // TODO: interact only with close obstacles
         //       (relative to the player pos, += 4 * OBJECT_SIZE should do?)
         if (o.bounds.x + o.bounds.width >= player.x) {
@@ -242,19 +248,22 @@ class Game {
     }
   }
 
-  void update_and_draw_backgroud() {
+  void update_and_draw_backgroud(bool do_update = true) {
     for (uint8_t i = 0; i < STARS_CNT; i++) {
       if (stars[i].x < 0) {
         stars[i].x = arduboy.width();
         stars[i].y = random(0, arduboy.height());
       }
+
+      arduboy.drawPixel(stars[i].x, stars[i].y, WHITE);
+
+      if (!do_update) continue;
+
       if (i % 2 == 0) {
         stars[i].x -= STARS_SPEED;
       } else {
         stars[i].x -= STARS_SPEED * 2;
       }
-
-      arduboy.drawPixel(stars[i].x, stars[i].y, WHITE);
     }
   }
 
@@ -299,6 +308,7 @@ class Game {
   uint16_t level_cnt;
   uint16_t new_level_cnt;
   bool do_preload;
+  bool on_pause;
 
   Obstacle obstacle_pool[OBSTACLES_POOL_CAP];
 };

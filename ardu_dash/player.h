@@ -58,7 +58,9 @@ struct Player {
     this->reset_jump();
   }
 
-  void update() {
+  void update(bool do_update = true) {
+    if (!do_update) return;
+    
     if (this->is_jumping && jump_idx <= PLAYER_JUMP_LENGTH) {
       this->y += PLAYER_JUMP_Y[jump_idx++];
       animation_idx = (animation_idx + 1) % 6;

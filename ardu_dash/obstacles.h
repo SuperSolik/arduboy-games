@@ -44,7 +44,9 @@ struct Obstacle {
       int16_t init_offset = 0,
       bool enabled = false) : Obstacle(Rect(x, y, width, height), _type, init_offset, enabled) {}
 
-  void update(bool update_anim = false) {
+  void update(bool do_update = true, bool update_anim = false) {
+    if(!do_update) return;
+    
     bounds.x -= MOVE_SPEED;
     if (update_anim) anim_idx = (anim_idx + 1) % SAW_ANIM_LEN;
   }
