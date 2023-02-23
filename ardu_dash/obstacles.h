@@ -178,7 +178,7 @@ struct Obstacle {
       case ObstacleType::SAW:
         for (int16_t y = bounds.y; y < bounds.y + bounds.height; y += OBJECT_SIZE) {
           for (int16_t x = bounds.x; x < bounds.x + bounds.width; x += OBJECT_SIZE) {
-            Sprites::drawOverwrite(x, y, obstacles_sprites, anim_idx + 2);
+            Sprites::drawSelfMasked(x, y, obstacles_sprites, anim_idx + 2);
           }
         }
         break;
