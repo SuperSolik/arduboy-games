@@ -58,9 +58,9 @@ gameplay:
 
 .hex file is available in the [/ardu_dash/binaries](/ardu_dash/binaries/), also playable [on emulator](https://felipemanga.github.io/ProjectABE/?url=https://raw.githubusercontent.com/SuperSolik/arduboy-games/master/ardu_dash/binaries/ardu_dash.hex)
 
-![ardy_dash_clip_1](https://user-images.githubusercontent.com/31539612/222897960-c7187ff3-8985-443c-bd35-9b2340083d55.gif)
+![ardy_dash_clip_1](https://user-images.githubusercontent.com/31539612/222920794-01c06409-8002-4c3c-9d0e-980b92dcfc10.gif)
 
-![ardu_dash_clip_2](https://user-images.githubusercontent.com/31539612/222897971-e70d2a6c-3213-45f6-9678-b715501e4b88.gif)
+![ardu_dash_clip_2](https://user-images.githubusercontent.com/31539612/222920796-e084e97f-9958-4f99-9910-684c2358b4c8.gif)
 
 ## Rotating 3D cube demo
 
