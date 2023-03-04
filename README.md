@@ -46,7 +46,7 @@ When all of the dots will be opened in such a way that it satisfies the dot coun
 
 Sidescroller, inspired by the famous "Geometry Dash" game. The obstacle batches are continuously generated, so the gameplay is endless.
 
-In the top left corner the first number represents the overall max score, second number represents the current score. The max score is persitent in the EEPROM.
+In the top left corner the first number represents the overall max score, second number represents the current score. The max score is persistent in the EEPROM.
 
 title screen:
 - `A` buttons to start the game
