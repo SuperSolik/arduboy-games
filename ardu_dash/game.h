@@ -98,13 +98,17 @@ class Game {
     }
 
     if (player.is_dead) {
+      on_pause = true;
+    }
+
+    if (player.is_dead && player.play_death_animation(arduboy.everyXFrames(2))) {
       uint16_t cur_score = player_distance / fps;
       if (cur_score > max_score) {
         max_score = cur_score;
         save_score_to_eeprom();
       }
 
-      this->arduboy.delayShort(1000);
+      this->arduboy.delayShort(250);
       this->reset();
       return;
     }
@@ -123,7 +127,7 @@ class Game {
 
     player.update(!on_pause);
 
-    if (!on_pause) {
+    if (!(on_pause || player.is_dead)) {
       player_distance += Obstacle::MOVE_SPEED;
       new_level_cnt = player_distance / (SEGMENT_W * OBJECT_SIZE);
       if (level_cnt != new_level_cnt) {
@@ -145,7 +149,7 @@ class Game {
       arduboy.print(obstacle_pool_free_size);
     );
 
-    floor.interact(player, arduboy);
+    if (!on_pause) floor.interact(player, arduboy);
     
 
     this->update_and_draw_backgroud(!on_pause);
@@ -277,7 +281,7 @@ class Game {
         o.update(do_update, arduboy.everyXFrames(12));
         // TODO: interact only with close obstacles
         //       (relative to the player pos, += 4 * OBJECT_SIZE should do?)
-        if (o.bounds.x + o.bounds.width >= player.x) {
+        if (o.bounds.x + o.bounds.width >= player.x && !on_pause) {
           // if obstacle is not behind
           obstacle_pool[obstacle_index].interact(this->player, arduboy);
         }

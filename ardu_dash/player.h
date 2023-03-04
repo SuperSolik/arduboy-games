@@ -5,6 +5,8 @@
 #include "bitmaps.h"
 
 constexpr static uint8_t PLAYER_JUMP_LENGTH = 16;
+constexpr static uint8_t JUMP_ANIM_LEN = 6;
+constexpr static uint8_t DEATH_ANIM_LEN = 5;
 constexpr static int8_t PLAYER_JUMP_Y[PLAYER_JUMP_LENGTH] = {
     -6, -5, -4, -3, -3, -2, -2, -1, 1, 2, 2, 3, 3, 4, 5, 6
 };
@@ -40,7 +42,11 @@ struct Player {
   }
 
   void draw(const Arduboy2& a) {
-    Sprites::drawSelfMasked(x-2, y-2, cube_sprite, animation_idx);
+    if (is_dead)
+      Sprites::drawSelfMasked(x-2, y-2, player_death_sprite, animation_idx);
+    else
+      Sprites::drawSelfMasked(x-2, y-2, player_sprite, animation_idx);
+      
   }
 
   void start_jump() {
@@ -63,10 +69,11 @@ struct Player {
     
     if (this->is_jumping && jump_idx <= PLAYER_JUMP_LENGTH) {
       this->y += PLAYER_JUMP_Y[jump_idx++];
-      animation_idx = (animation_idx + 1) % 6;
+      animation_idx = (animation_idx + 1) % JUMP_ANIM_LEN;
     } else {
       is_grounded = false;
       y += FALL_SPEED;
+      animation_idx = 0;
     }
   }
 
@@ -76,8 +83,19 @@ struct Player {
   }
 
   void dead() {
-    // TOOD: start death animation
     is_dead = true;
+    animation_idx = 0;
+  }
+
+  bool play_death_animation(bool update) {
+    if(!update) return false;
+
+    animation_idx = animation_idx + 1;
+    if (animation_idx >= DEATH_ANIM_LEN) {
+      return true;
+      animation_idx = 0;
+    }
+    return false;
   }
 
   int16_t x;
