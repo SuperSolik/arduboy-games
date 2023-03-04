@@ -12,7 +12,7 @@ Controls:
 - `A` button to: reveal a tile if not revealed, reveal closest non-flagged neighbors (helps speed up opening the non-mined tiles)
 - `B` button to toggle flag on a tile (mark tile as mined)
 
-.hex file is available in the release, you can try it [on the emulator as well](https://felipemanga.github.io/ProjectABE/?url=https://github.com/SuperSolik/arduboy-games/releases/download/minesweeper-done/minesweeper.ino.hex)
+.hex file is available in [/minesweeper/binaries/](/minesweeper/binaries/), you can try it [on the emulator](https://felipemanga.github.io/ProjectABE/?url=https://raw.githubusercontent.com/SuperSolik/arduboy-games/master/minesweeper/binaries/minesweeper.hex)
 
 <img width="300" alt="logo" src="https://user-images.githubusercontent.com/31539612/213283596-319814df-716a-457f-b5c2-df04d42eaf46.png">
 <img width="300" alt="gameplay" src="https://user-images.githubusercontent.com/31539612/213283593-5d612723-06ec-4a56-8c8c-cc5f7f644a24.png">
@@ -37,10 +37,30 @@ gameplay:
 
 When all of the dots will be opened in such a way that it satisfies the dot counts (represented as numbers), the game will show the overall score (persistently saved to EEPROM)
 
-.hex file is available in the corresponding release, also playable [on emulator](https://felipemanga.github.io/ProjectABE/?url=https://github.com/SuperSolik/arduboy-games/releases/download/dot-arduboy-edition/guess_dots.ino.hex&skin=Arduboy)
+.hex file is available in the [/guess_dots/binaries](/guess_dots/binaries/), also playable [on emulator](https://felipemanga.github.io/ProjectABE/?url=https://raw.githubusercontent.com/SuperSolik/arduboy-games/master/guess_dots/binaries/guess_dots.hex)
 
 <img width="300" alt="guess dots gameplay easy & medium" src="https://user-images.githubusercontent.com/31539612/215164272-23bcb568-a8ea-41fd-b0de-c066c448a99a.gif" >
 <img width="300" alt="guess dots gameplay hard" src="https://user-images.githubusercontent.com/31539612/215164860-926f271f-4136-46b5-a2bb-f0b211cfd23d.gif" >
+
+## Dash Arduboy Edition
+
+Sidescroller, inspired by the famous "Geometry Dash" game. The obstacle batches are continuously generated, so the gameplay is endless.
+
+In the top left corner the first number represents the overall max score, second number represents the current score. The max score is persitent in the EEPROM.
+
+title screen:
+- `A` buttons to start the game
+- `LEFT` and `RIGHT` buttons simultaneously to reset the max score
+
+gameplay:
+- `UP` or `A` or `B` button to jump
+- `DOWN` to pause
+
+.hex file is available in the [/ardu_dash/binaries](/ardu_dash/binaries/), also playable [on emulator](https://felipemanga.github.io/ProjectABE/?url=https://raw.githubusercontent.com/SuperSolik/arduboy-games/master/ardu_dash/binaries/ardu_dash.hex)
+
+![ardy_dash_clip_1](https://user-images.githubusercontent.com/31539612/222897960-c7187ff3-8985-443c-bd35-9b2340083d55.gif)
+
+![ardu_dash_clip_2](https://user-images.githubusercontent.com/31539612/222897971-e70d2a6c-3213-45f6-9678-b715501e4b88.gif)
 
 ## Rotating 3D cube demo
 
