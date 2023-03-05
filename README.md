@@ -25,7 +25,7 @@ Similar to Minesweeper, but with different "cell" layout, and instead of bombs t
 
 title screen:
 - `A` or `B` buttons to difficulty screen
-- `LEFT` and `RIGHT` buttons simultaneously to reset the score
+- `UP` and `DOWN` buttons simultaneously to reset the score
 
 difficulty screen:
 - `UP` and `DOWN` buttons to choose between difficulties
@@ -50,7 +50,7 @@ In the top left corner the first number represents the overall max score, second
 
 title screen:
 - `A` buttons to start the game
-- `LEFT` and `RIGHT` buttons simultaneously to reset the max score
+- `UP` and `DOWN` buttons simultaneously to reset the max score
 
 gameplay:
 - `UP` or `A` or `B` button to jump
