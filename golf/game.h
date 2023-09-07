@@ -7,8 +7,9 @@ constexpr int SUB_HEIGHT = HEIGHT * SUBPIXELS;
 constexpr int VEL_DECREASE_FACTOR = 2;
 constexpr int INIT_VEL = 45;
 
-#define TO_WORLD(x) (int)(x >> 4)
-
+inline int to_world(int x) {
+  return (int)(x >> 4);
+}
 
 enum class GameState: uint8_t {
   INIT_SCREEN,
@@ -35,7 +36,7 @@ struct Ball {
   }
 
   void draw(Arduboy2& a) {
-    a.fillCircle(TO_WORLD(x), TO_WORLD(y), this->radius, WHITE);
+    a.fillCircle(to_world(x), to_world(y), this->radius, WHITE);
   }
 
   void update(const float& angle) {
@@ -71,10 +72,10 @@ struct Stick {
     float cos_angle = cosf(angle);
     float sin_angle = sinf(angle);
     int dist = dist_to_ball + ball.radius;
-    int x1 = (int)((dist) * cos_angle) + TO_WORLD(ball.x);
-    int y1 = (int)((dist) * sin_angle) + TO_WORLD(ball.y);
-    int x2 = (int)((dist + length) * cos_angle) + TO_WORLD(ball.x);
-    int y2 = (int)((dist + length) * sin_angle) + TO_WORLD(ball.y);
+    int x1 = (int)((dist) * cos_angle) + to_world(ball.x);
+    int y1 = (int)((dist) * sin_angle) + to_world(ball.y);
+    int x2 = (int)((dist + length) * cos_angle) + to_world(ball.x);
+    int y2 = (int)((dist + length) * sin_angle) + to_world(ball.y);
     a.drawLine(x1, y1, x2, y2, WHITE);
   }
 };
@@ -135,7 +136,7 @@ class Game {
       }
     }
 
-    if (this->arduboy.pressed(A_BUTTON) && !this->ball.is_moving) {
+    if (this->arduboy.justPressed(A_BUTTON) && !this->ball.is_moving) {
       this->ball.vel_x = INIT_VEL;
       this->ball.vel_y = INIT_VEL;
     }
@@ -144,9 +145,9 @@ class Game {
 
 
     // draw
-    this->arduboy.print(TO_WORLD(ball.x));
+    this->arduboy.print(to_world(ball.x));
     this->arduboy.print("\n");
-    this->arduboy.print(TO_WORLD(ball.y));
+    this->arduboy.print(to_world(ball.y));
     this->arduboy.print("\n");
     this->arduboy.print(this->ball.is_moving);
 
